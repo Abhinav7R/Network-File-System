@@ -15,7 +15,7 @@ typedef struct filepaths
 }filepaths;
 
 
-//Server implementation for NFS
+//storage server implementation for NFS
 int main(int argc, char *argv[])
 {
     if(argc != 4)

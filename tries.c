@@ -43,6 +43,7 @@ void insert(trie* root, char* str, int server_num)
         p = p->next[str[i]];
     }
     p->is_end = server_num;
+    printf("inserted %s\n",str);
 }
 
 //search in trie
@@ -106,17 +107,26 @@ void print_all_strings_in_trie(trie* root)
     print_trie(root,"");
 }
 
-int main()
-{
-    int n;
-    scanf("%d",&n);
-    trie* root = init();
-    for (int i = 0; i < n; i++)
-    {
-        char str[100];
-        scanf("%s",str);
-        insert(root,str,i+1);
-    }
-    print_all_strings_in_trie(root);
-    return 0;
-}
+// int main()
+// {
+//     int n;
+//     scanf("%d",&n);
+//     trie* root = init();
+//     for (int i = 0; i < n; i++)
+//     {
+//         char str[100];
+//         scanf("%s",str);
+//         insert(root,str,i+1);
+//         if(search(root,str))
+//         {
+//             printf("found %s\n",str);
+//         }
+//         else
+//         {
+//             printf("not found %s\n",str);
+//         }
+//     }
+    
+//     print_all_strings_in_trie(root);
+//     return 0;
+// }
