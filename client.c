@@ -191,6 +191,9 @@ int main()
                     printf("%s",buf2);
                 }
             }
+
+            //close connection with storage server
+            close(sock2);
         }
         else
         {   bzero(buf,BUF_SIZE);
@@ -206,7 +209,7 @@ int main()
             }
             else if(strncmp(input,"delete",strlen("delete"))==0)
             {
-                //receive ack from storage server
+                //receive ack from naming server
                 if(recv(sock,buf,BUF_SIZE,0)<0)
                 {
                     perror("recv() error");
@@ -216,7 +219,7 @@ int main()
             }
             else if(strncmp(input,"copy",strlen("copy"))==0)
             {
-                //receive ack from storage server
+                //receive ack from naming server
                 if(recv(sock,buf,BUF_SIZE,0)<0)
                 {
                     perror("recv() error");
@@ -226,7 +229,7 @@ int main()
             }
             else if(strncmp(input,"create folder",strlen("create folder"))==0)
             {
-                //receive ack from storage server
+                //receive ack from naming server
                 if(recv(sock,buf,BUF_SIZE,0)<0)
                 {
                     perror("recv() error");
@@ -236,7 +239,7 @@ int main()
             }
             else if(strncmp(input,"delete folder",strlen("delete folder"))==0)
             {
-                //receive ack from storage server
+                //receive ack from naming server
                 if(recv(sock,buf,BUF_SIZE,0)<0)
                 {
                     perror("recv() error");
@@ -246,13 +249,22 @@ int main()
             }
             else if(strncmp(input,"copy folder",strlen("copy folder"))==0)
             {
-                //receive ack from storage server
+                //receive ack from naming server
                 if(recv(sock,buf,BUF_SIZE,0)<0)
                 {
                     perror("recv() error");
                     exit(1);
                 }
                 // printf("%s",buf);
+            }
+            else
+            {
+                if(recv(sock,buf,BUF_SIZE,0)<0)
+                {
+                    perror("recv() error");
+                    exit(1);
+                }
+                printf("Invalid action\n");
             }
         
         }
