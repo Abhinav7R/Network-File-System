@@ -14,7 +14,8 @@ int main()
 
     //thread for storage server
     
-    
+    //1] storage server request aayenge accept that and retrieve its ip and port
+    //2] accept client request
 
     
 }
