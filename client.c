@@ -41,6 +41,7 @@ int main()
         perror("recv() error");
         exit(1);
     }
+    printf("%s\n",buf);
     
     //First send action to Naming Server 
     //actions are read write retrieve information are actions on files

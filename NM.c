@@ -15,6 +15,8 @@ extern ss_info* array_of_ss_info;
 #define naming_server_port 4545
 char* nm_ip = "127.0.0.1";
 
+int what_to_do(char* input, int nm_sock_for_client);
+
 int main()
 {
     init_ss_info();
@@ -71,6 +73,8 @@ int main()
     //for now from 1 storage server
     while (count < 1)
     {
+        count++;
+
         addr_size = sizeof(ss_as_client_addr);
         ss_as_client_sock = accept(server_sock, (struct sockaddr *)&ss_as_client_addr, &addr_size);
 
@@ -102,27 +106,21 @@ int main()
             exit(1);
         }
 
-        //change below code to 
         // Extract file paths and insert them into Tries
-        while (1)
+        // tokenise B on | and insert each token into the Trie
+        bzero(B, 1024);
+        if (recv(ss_as_client_sock, B, sizeof(B), 0) < 0)
         {
-            bzero(B, 1024);
-            if (recv(ss_as_client_sock, B, sizeof(B), 0) < 0)
-            {
-                perror("[-]Receive error");
-                exit(1);
-            }
-
-            if (strcmp(B, "DONE") == 0)
-            {
-                // All paths received
-                break;
-            }
-
-            // Here count = Storage Server number
-            insert(root, B, count);
+            perror("[-]Receive error");
+            exit(1);
         }
-        count++;
+        char* token = strtok(B, "|");
+        while(token != NULL)
+        {
+            insert(root, token, count);
+            token = strtok(NULL, "|");
+        }
+
 
         // Acknowledge connection
         bzero(B, 1024);
@@ -145,8 +143,72 @@ int main()
 
 
     // Accept CLient connection and process its queries
+    int nm_sock_for_client;
+    struct sockaddr_in nm_addr_for_client;
+    socklen_t addr_size_for_client;
+    char buf[BUF_SIZE];
     
-    // Close the Naming Server socket
+    // Create socket
+    nm_sock_for_client = socket(PF_INET, SOCK_STREAM, 0);
+    if (nm_sock_for_client < 0)
+    {
+        perror("socket() error");
+        exit(1);
+    }
+
+    printf("[+]Naming Server socket for client created.\n");
+
+    memset(&nm_addr_for_client, '\0', sizeof(nm_addr_for_client)); //init
+    nm_addr_for_client.sin_family = AF_INET;
+    nm_addr_for_client.sin_port = htons(naming_server_port);
+    nm_addr_for_client.sin_addr.s_addr = inet_addr(nm_ip);
+
+    int nn = bind(nm_sock_for_client, (struct sockaddr*)&nm_addr_for_client, sizeof(nm_addr_for_client));
+    if(nn < 0)
+    {
+        perror("[-]Bind error");
+        exit(1);
+    }
+
+    printf("[+]Bind to port for clients \n");
+
+    int mm = listen(nm_sock_for_client, NUM_CLIENTS);
+    if(mm < 0)
+    {
+        perror("[-]Listen error client");
+        exit(1);
+    }
+
+    //send connection successful to client
+    addr_size_for_client = sizeof(nm_addr_for_client);
+    int client_sock = accept(nm_sock_for_client, (struct sockaddr*)&nm_addr_for_client, &addr_size_for_client);
+    if(client_sock < 0)
+    {
+        perror("[-]Accept error");
+        exit(1);
+    }
+
+    printf("[+]Client connected\n");
+
+    bzero(buf,BUF_SIZE);
+    strcpy(buf,"Connection successful");
+    if(send(client_sock,buf,strlen(buf),0)<0)
+    {
+        perror("send() error");
+        exit(1);
+    }
+
+    char input[BUF_SIZE];
+    if(recv(client_sock,buf,BUF_SIZE,0)<0)
+    {
+        perror("recv() error");
+        exit(1);
+    }
+
+    
+    what_to_do(input,client_sock);
+    
+    // Close the Naming Server socket for storage server
     close(server_sock);
 
     return 0;

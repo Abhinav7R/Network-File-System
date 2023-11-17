@@ -17,7 +17,7 @@ extern ss_info* array_of_ss_info;
 
 int what_to_do(char* input, int nm_sock_for_client)
 {
-    if(strncmp(input,"read",strlen("read"))==0)
+    if((strncmp(input,"read",strlen("read"))==0)||(strncmp(input,"retrieve",strlen("retrieve"))==0))
     {
         char* filename = strtok(input," ");
         filename = strtok(NULL," ");
@@ -72,13 +72,9 @@ int what_to_do(char* input, int nm_sock_for_client)
     }
     else if(strncmp(input,"write",strlen("write"))==0)
     {
-
+        
     }
-    else if(strncmp(input,"retrieve",strlen("retrieve"))==0)
-    {
-
-    }
-
+    
     else if(strncmp(input,"create_file",strlen("create"))==0)
     {
         //if file already exists send ack as -1

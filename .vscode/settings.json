@@ -3,6 +3,7 @@
         "unistd.h": "c",
         "headers.h": "c",
         "tries.h": "c",
-        "lru.h": "c"
+        "lru.h": "c",
+        "ss_info.h": "c"
     }
 }
