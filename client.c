@@ -51,7 +51,7 @@ int main()
     //for write: write filename and then after receiving ack write data
     //for retrieve information: retrieve filename
     //for create: create_file filepath
-    //for delete: delete_file filename with path
+    //for delete: delete_file filepth
     //for copy file: copy_file filepath to newfilepath
     //for create folder: create_folder folderpath
     //for delete folder: delete_folder folderpath
@@ -90,6 +90,7 @@ int main()
                 perror("recv() error");
                 exit(1);
             }
+            //check if -1 is received then file doesnt exist and continue
 
             char *server_ip = strtok(buf," ");
             char *server_port = strtok(NULL," ");
@@ -224,6 +225,9 @@ int main()
                     perror("recv() error");
                     exit(1);
                 }
+                
+                //if ack is -1 then file cant be created as it already exists
+
                 // printf("%s",buf);
             }
             else if(strncmp(input,"delete_file",strlen("delete"))==0)

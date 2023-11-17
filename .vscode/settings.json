@@ -2,6 +2,7 @@
     "files.associations": {
         "unistd.h": "c",
         "headers.h": "c",
-        "tries.h": "c"
+        "tries.h": "c",
+        "lru.h": "c"
     }
 }

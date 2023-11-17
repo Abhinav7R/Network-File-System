@@ -20,7 +20,7 @@ typedef struct lru_node
 {
     char* filepath;
     int storage_server_num;
-    int storage_server_port;
+    int storage_server_port_for_client;
     char* storage_server_ip;
     struct lru_node* next;
     struct lru_node* prev;
@@ -28,7 +28,7 @@ typedef struct lru_node
 
 lru_node* find_and_return(char* filepath, lru_head* head);
 lru_head* init_lru();
-lru_node* make_lru_node(char* filepath, int storage_server_num, int storage_server_port, char* storage_server_ip);
+lru_node* make_lru_node(char* filepath, int storage_server_num, int storage_server_port_for_client, char* storage_server_ip);
 void insert_at_front(lru_node* node, lru_head* head);
 lru_node* delete_lru_node(char* filepath, lru_head* head);
 void shift_node_to_front(char* filepath, lru_head* head);

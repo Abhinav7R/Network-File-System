@@ -23,13 +23,13 @@ lru_head* init_lru()
     return head;
 }
 
-lru_node* make_lru_node(char* filepath, int storage_server_num, int storage_server_port, char* storage_server_ip)
+lru_node* make_lru_node(char* filepath, int storage_server_num, int storage_server_port_for_client, char* storage_server_ip)
 {
     lru_node* node = (lru_node*)malloc(sizeof(lru_node));
     node->filepath = (char*)calloc(sizeof(char), strlen(filepath));
     strcpy(node->filepath, filepath);
     node->storage_server_num = storage_server_num;
-    node->storage_server_port = storage_server_port;
+    node->storage_server_port_for_client = storage_server_port_for_client;
     node->storage_server_ip = (char*)calloc(sizeof(char), strlen(storage_server_ip));
     strcpy(node->storage_server_ip, storage_server_ip);
     node->next = NULL;
@@ -135,7 +135,7 @@ void print_lru(lru_head* head)
     lru_node* temp = head->front;
     while(temp != NULL)
     {
-        printf("%s %d %d %s\n", temp->filepath, temp->storage_server_num, temp->storage_server_port, temp->storage_server_ip);
+        printf("%s %d %d %s\n", temp->filepath, temp->storage_server_num, temp->storage_server_port_for_client, temp->storage_server_ip);
         temp = temp->next;
     }
 }

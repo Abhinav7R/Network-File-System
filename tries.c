@@ -53,7 +53,7 @@ int search(trie* root, char* str)
     }
     if (p->is_end > 0)
     {
-        return 1;
+        return p->is_end;
     }
     return 0;
 }
