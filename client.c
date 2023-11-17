@@ -1,11 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <time.h>
+#include "headers.h"
 
-#define BUF_SIZE 1024
 
 //client program
 int main()
@@ -89,6 +83,14 @@ int main()
 
         if(strncmp(input,"read",strlen("read"))==0 || strncmp(input,"write",strlen("write"))==0 || strncmp(input,"retrieve",strlen("retrieve"))==0)
         {
+            //receive port and ip of storage server
+            bzero(buf,BUF_SIZE);
+            if(recv(sock,buf,BUF_SIZE,0)<0)
+            {
+                perror("recv() error");
+                exit(1);
+            }
+
             char *server_ip = strtok(buf," ");
             char *server_port = strtok(NULL," ");
             printf("ip: %s port: %s\n",server_ip,server_port);
@@ -271,6 +273,8 @@ int main()
 
     }
 
+    printf("Exiting...\n");
+    close(sock);
 
     
     

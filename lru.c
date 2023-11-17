@@ -1,25 +1,4 @@
-#include "headers.h"
-
-#define LRU_CACHE_SIZE 10
-
-typedef struct lru_head
-{
-    int num_nodes;
-    struct lru_node* front;
-    struct lru_node* rear;
-}lru_head;
-
-//front is latest and rear is oldest
-
-typedef struct lru_node
-{
-    char* filepath;
-    int storage_server_num;
-    int storage_server_port;
-    char* storage_server_ip;
-    struct lru_node* next;
-    struct lru_node* prev;
-}lru_node;
+#include "lru.h"
 
 lru_node* find_and_return(char* filepath, lru_head* head)
 {
@@ -94,7 +73,7 @@ void insert_at_front(lru_node* node, lru_head* head)
     head->num_nodes++;
 }
 
-lru_node* delete_node(char* filepath, lru_head* head)
+lru_node* delete_lru_node(char* filepath, lru_head* head)
 {
     lru_node* return_node = NULL;
     if(head->num_nodes == 0)
@@ -145,7 +124,7 @@ void shift_node_to_front(char* filepath, lru_head* head)
         return;
     if(find_and_return(filepath, head) == NULL)
         return;
-    lru_node* deleted_node = delete_node(filepath, head);
+    lru_node* deleted_node = delete_lru_node(filepath, head);
     insert_at_front(deleted_node, head);
 }
 

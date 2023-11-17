@@ -115,8 +115,7 @@ void print_all_strings_in_trie(trie* root)
 //         {
 //             printf("not found %s\n",str);
 //         }
-//     }
-    
+//     } 
 //     print_all_strings_in_trie(root);
 //     return 0;
 // }
