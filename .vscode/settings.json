@@ -4,6 +4,7 @@
         "headers.h": "c",
         "tries.h": "c",
         "lru.h": "c",
-        "ss_info.h": "c"
+        "ss_info.h": "c",
+        "string.h": "c"
     }
 }

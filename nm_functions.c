@@ -29,7 +29,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             int ss_num = search(root, filename);
             if (ss_num == 0)
             {
-                // send -1 as ack
+                // send -1 as acknm_sock_for_client
                 char send_details_to_client[BUF_SIZE];
                 sprintf(send_details_to_client, "%d", -1);
                 if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
@@ -84,7 +84,9 @@ int what_to_do(char *input, int nm_sock_for_client)
 
         // command = create_file filepath
         // Get the file path from the command
-        char *file_path = strtok(input, " ");
+        char temp[1024];
+        strcpy(temp, input);
+        char *file_path = strtok(temp, " ");
         file_path = strtok(NULL, " ");
 
         // Checking if the file already exists in the trie
@@ -156,8 +158,8 @@ int what_to_do(char *input, int nm_sock_for_client)
                 exit(1);
             }
 
-            // Send file path to Storage Server
-            if (send(sock2, file_path, strlen(file_path), 0) < 0)
+            // Send input to Storage Server
+            if (send(sock2, input, strlen(input), 0) < 0)
             {
                 perror("send() error");
                 exit(1);
@@ -172,12 +174,88 @@ int what_to_do(char *input, int nm_sock_for_client)
             lru_node *new_lru_node = make_lru_node(file_path, ss_num, ss_client_port, ss_ip);
             insert_at_front(new_lru_node, head);
 
+            // Send Ack to client that opeartion is successfull
+
             close(sock2);
         }
     }
-    
+
     else if (strncmp(input, "delete_file", strlen("delete")) == 0)
     {
+        // search filepath in the trie
+        // retireve ss_num and delete from ss_info and receive ack from ss
+        // if found delete from trie
+        // if present in lru delete from there
+        // send ack to client
+
+        // command = delete_file filepath
+        // Get the file path from the command
+        char temp[1024];
+        strcpy(temp, input);
+        char *file_path = strtok(temp, " ");
+        file_path = strtok(NULL, " ");
+
+        int ss_num = search(root, file_path);
+
+        if (ss_num <= 0)
+        {
+            char send_details_to_client[BUF_SIZE];
+            sprintf(send_details_to_client, "%d", -1);
+            if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+            return 0;
+        }
+        else if (ss_num > 0)
+        {
+            // Retrieve Storage Server information
+            int ss_client_port = array_of_ss_info[ss_num].ss_client_port;
+            int ss_nm_port = array_of_ss_info[ss_num].ss_nm_port;
+            char *ss_ip = array_of_ss_info[ss_num].ss_ip;
+
+            // Make a connection with the Storage Server
+            int sock2;
+            struct sockaddr_in serv_addr2;
+            char buffer[1024];
+
+            // Create socket
+            sock2 = socket(AF_INET, SOCK_STREAM, 0);
+            if (sock2 == -1)
+            {
+                perror("socket() error");
+                exit(1);
+            }
+
+            memset(&serv_addr2, 0, sizeof(serv_addr2));
+            serv_addr2.sin_family = AF_INET;
+            serv_addr2.sin_addr.s_addr = inet_addr(ss_ip);
+            serv_addr2.sin_port = htons(ss_nm_port);
+
+            // Connect to Storage Server
+            if (connect(sock2, (struct sockaddr *)&serv_addr2, sizeof(serv_addr2)) == -1)
+            {
+                perror("connect() error");
+                exit(1);
+            }
+
+            // Send input to Storage Server
+            if (send(sock2, input, strlen(input), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+
+            // Receive Ack from Storage Server
+
+            close(sock2);
+            // Delete the file path from the trie
+            delete_node(root, file_path);
+            // Search and delete from the LRU cache
+            lru_node *deleted_node = delete_lru_node(file_path, head);
+            free(deleted_node);
+        }
     }
     else if (strncmp(input, "copy_file", strlen("copy")) == 0)
     {
