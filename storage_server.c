@@ -1,8 +1,8 @@
 #include "headers.h"
 #define PORT 4545
-char* read = "read";
-char* write = "write";
-char* retrieve = "retrieve";
+char* Read = "read";
+char* Write = "write";
+char* Retrieve = "retrieve";
 
 typedef struct filepaths* files;
 typedef struct filepaths
@@ -68,19 +68,39 @@ void nm_handler_for_ops(void* arg)
         exit(1);
     }
     printf("[+]Naming server connected.\n");
-    bzero(buffer_nm, 1024);
 
+    
+}
+
+void client_handler(void* arg)
+{
+    args args_client = (args)arg;
+    socklen_t addr_size = args_client->addr_size;
+    struct sockaddr_in server_addr_2 = args_client->server_addr;
+    int server_sock_2 = args_client->server_sock;
+    int client_sockfd = args_client->sockfd;
+    char* buffer_client = args_client->buffer;
+
+    addr_size = sizeof(server_addr_2);
+    client_sockfd = accept(server_sock_2, (struct sockaddr*)&server_addr_2, &addr_size);
+    if(client_sockfd < 0)
+    {
+        perror("[-]Accept error");
+        exit(1);
+    }
+    printf("[+]Client connected.\n");
+    
     while(1)
     {
-        bzero(buffer_nm, 1024);
-        if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+        bzero(buffer_client, 1024);
+        if(recv(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
         {
             perror("[-]Receive error");
             exit(1);
         }
-        if(strncmp(buffer_nm, read, strlen(read)) == 0)
+        if(strncmp(buffer_client, Read, strlen(Read)) == 0)
         {
-            char* token = strtok(buffer_nm, " ");
+            char* token = strtok(buffer_client, " ");
             token = strtok(NULL, " ");
             char* file = token;
             FILE* fd = fopen(file, "rb");
@@ -96,9 +116,9 @@ void nm_handler_for_ops(void* arg)
             long num_packets = size/1024;
             if(size%1024 != 0)
                 num_packets++;
-            bzero(buffer_nm, 1024);
-            sprintf(buffer_nm, "%ld", num_packets);
-            if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+            bzero(buffer_client, 1024);
+            sprintf(buffer_client, "%ld", num_packets);
+            if(send(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
             {
                 perror("[-]Send error");
                 exit(1);
@@ -110,28 +130,63 @@ void nm_handler_for_ops(void* arg)
             }
             while(num_packets--)
             {
-                bzero(buffer_nm, 1024);
-                if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+                bzero(buffer_client, 1024);
+                if(send(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
                 {
                     perror("[-]Send error");
                     exit(1);
                 }
             }
+            close(fd);
         }
-        else if(strncmp(buffer_nm, write, sizeof(write)) == 0)
+        else if(strncmp(buffer_client, Write, sizeof(Write)) == 0)
         {
-            char* token = strtok(buffer_nm, " ");
+            char* token = strtok(buffer_client, " ");
             token = strtok(NULL, " ");
             char* file = token;
-            
+            int fd;
+            if(fd = open(file, O_WRONLY | O_APPEND, 0644) < 0)
+            {
+                perror("[-]File open error");
+                exit(1);
+            }
+            while(1)
+            {
+                bzero(buffer_client, 1024);
+                if(recv(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
+                {
+                    perror("[-]Receive error");
+                    exit(1);
+                }
+                if(strcmp(buffer_client, "\n") == 0)
+                    break;
+                fprintf(fd, "%s", buffer_client);
+                fprintf(fd, "\n");
+            }
+            close(fd);
+        }
+        else if(strncmp(buffer_client, Retrieve, strlen(Retrieve)) == 0)
+        {
+            char* token = strtok(buffer_client, " ");
+            token = strtok(NULL, " ");
+            char* file = token;
+            struct stat fileStat;
+            if(stat(file, &fileStat) < 0)
+            {
+                perror("[-]File stat error");
+                exit(1);
+            }
+            bzero(buffer_client, 1024);
+            //concatenate file size and permissions into buffer
+            sprintf(buffer_client, "%ld %o", fileStat.st_size, fileStat.st_mode);
+            if(send(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
+            {
+                perror("[-]Send error");
+                exit(1);
+            }
         }
     }
-    close(nm_sockfd);
-}
-
-void client_handler(void* arg)
-{
-    
+    close(client_sockfd);
 }
 
 
@@ -174,6 +229,7 @@ int main(int argc, char *argv[])
         strcat(paths_of_all, head->name);
         head = head->next;
     }
+    strcat(paths_of_all, "|");
     
     int socky, server_sock_1, server_sock_2, nm_sockfd, client_sockfd;
     struct sockaddr_in server_addr_1, server_addr_2, nm_addr, cliett_addr;
@@ -199,25 +255,6 @@ int main(int argc, char *argv[])
         exit(1);
     }
     nm_handler(buffer_nm, socky, PORT, client_port, ip, paths_of_all);
-
-    //Creating threads for concurrent working of various clients
-    // pthread_t tid[10];
-    // int i = 0;
-    // while(1)
-    // {
-    //     addr_size = sizeof(server_addr_2);
-    //     client_sockfd = accept(server_sock_2, (struct sockaddr*)&server_addr_2, &addr_size);
-    //     if(client_sockfd < 0)
-    //     {
-    //         perror("[-]Accept error");
-    //         exit(1);
-    //     }
-    //     printf("[+]Client connected.\n");
-    //     if(pthread_create(&tid[i], NULL, client_handler, &client_sockfd) != 0)
-    //         printf("[-]Thread creation error.\n");
-    // }
-
-    //for reading commands
 
     //connecting to client
     server_sock_2 = socket(AF_INET, SOCK_DGRAM, 0);
@@ -263,91 +300,20 @@ int main(int argc, char *argv[])
     args_nm->sockfd = nm_sockfd;
     args_nm->buffer = buffer_nm;
     nm_handler_for_ops((void*)args_nm);
-    // if(pthread_create(&input[0], NULL, nm_handler_for_ops, (void*)args_nm) != 0)
-    //     printf("[-]Thread creation error.\n");
+    if(pthread_create(&input[0], NULL, nm_handler_for_ops, (void*)args_nm) != 0)
+        printf("[-]Thread creation error.\n");
 
-    // addr_size = sizeof(server_addr_2);
-    // args args_client = (args)malloc(sizeof(threadargs));
-    // args_client->addr_size = addr_size;  
-    // args_client->server_addr = server_addr_2;
-    // args_client->server_sock = server_sock_2;
-    // args_client->sockfd = client_sockfd;
-    // args_client->buffer = buffer_client;
-    // if(pthread_create(&input[1], NULL, client_handler, args_client) != 0)
-    //     printf("[-]Thread creation error.\n");
+    addr_size = sizeof(server_addr_2);
+    args args_client = (args)malloc(sizeof(threadargs));
+    args_client->addr_size = addr_size;  
+    args_client->server_addr = server_addr_2;
+    args_client->server_sock = server_sock_2;
+    args_client->sockfd = client_sockfd;
+    args_client->buffer = buffer_client;
+    if(pthread_create(&input[1], NULL, client_handler, (void*)args_client) != 0)
+        printf("[-]Thread creation error.\n");
 
-    // while(1)
-    // {
-    //     bzero(buffer_nm, 1024);
-    //     if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
-    //     {
-    //         perror("[-]Receive error");
-    //         exit(1);
-    //     }
-    //     if(strcmp(buffer_nm, "create") == 0)
-    //     {
-    //         bzero(buffer_nm, 1024);
-    //         strcpy(buffer_nm, "Send name of file");
-    //         if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
-    //         {
-    //             perror("[-]Send error");
-    //             exit(1);
-    //         }
-    //         bzero(buffer_nm, 1024);
-    //         if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
-    //         {
-    //             perror("[-]Receive error");
-    //             exit(1);
-    //         }
-
-    //         int ack = open(buffer_nm, O_WRONLY | O_CREAT, 0644);
-    //         bzero(buffer_nm, 1024);
-    //         sprintf(buffer_nm, "%d", ack);
-    //         if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
-    //         {
-    //             perror("[-]Send error");
-    //             exit(1);
-    //         }
-    //         close(ack);
-    //     }
-    //     else if(strcmp(buffer_nm, "delete") == 0)
-    //     {
-    //         bzero(buffer_nm, 1024);
-    //         strcpy(buffer_nm, "Send name of file");
-    //         if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
-    //         {
-    //             perror("[-]Send error");
-    //             exit(1);
-    //         }
-    //         bzero(buffer_nm, 1024);
-    //         if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
-    //         {
-    //             perror("[-]Receive error");
-    //             exit(1);
-    //         }
-        
-    //         int ack = remove(buffer_nm);
-    //         bzero(buffer_nm, 1024);
-    //         sprintf(buffer_nm, "%d", &ack);
-    //         if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
-    //         {
-    //             perror("[-]Send error");
-    //             exit(1);
-    //         }
-    //     }
-    //     else if(strcmp(buffer_nm, "COPY") == 0)
-    //     {
-
-    //     }
-    //     else if(strcmp(buffer_nm, "EXIT") == 0)
-    //     {
-    //         printf("[+]Exiting.\n");
-    //         break;
-    //     }
-    //     else
-    //     {
-    //         printf("[-]Invalid command received.\n");
-    //         break;
-    //     }
-    // }
+    close(server_sock_1);
+    close(server_sock_2);
+    return 0;
 }
