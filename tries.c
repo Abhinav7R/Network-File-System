@@ -1,14 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-//tries in c for all ascii characters
-
-typedef struct node
-{
-    int is_end;     //also the same as server_num
-    struct node *next[128];
-}trie;
+#include "tries.h"
 
 //initialise trie
 
@@ -68,7 +58,7 @@ int search(trie* root, char* str)
 
 //delete from trie
 
-void delete(trie* root, char* str)
+void delete_node(trie* root, char* str)
 {
     trie* p = root;
     for (int i = 0; i < strlen(str); i++)

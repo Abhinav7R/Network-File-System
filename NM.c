@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <tries.c>
+#include "tries.h"
 
 // Assumptions: There are 10 Storage Servers in the NFS
 
@@ -49,8 +50,8 @@ int main()
     printf("[+]Bind to port 1234\n");
 
     // Listen for incoming connections
-    int n = listen(server_sock, 5);
-    if (n < 0)
+    int m = listen(server_sock, 5);
+    if (m < 0)
     {
         perror("[-]Listen error");
         exit(1);
