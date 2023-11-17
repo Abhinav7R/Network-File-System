@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <pthread.h>
+#include <sys/stat.h>
 
 #include "tries.h"
 #include "lru.h"

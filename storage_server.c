@@ -51,7 +51,7 @@ void* nm_handler(char* buffer_nm, int nm_sockfd, int port, int client_port, char
     close(nm_sockfd);
 }
 
-void nm_handler_for_ops(void* arg)
+void* nm_handler_for_ops(void* arg)
 {
     args args_nm = (args)arg;
     socklen_t addr_size = args_nm->addr_size;
@@ -69,10 +69,10 @@ void nm_handler_for_ops(void* arg)
     }
     printf("[+]Naming server connected.\n");
 
-    
+    pthread_exit(NULL);
 }
 
-void client_handler(void* arg)
+void* client_handler(void* arg)
 {
     args args_client = (args)arg;
     socklen_t addr_size = args_client->addr_size;
@@ -137,15 +137,15 @@ void client_handler(void* arg)
                     exit(1);
                 }
             }
-            close(fd);
+            fclose(fd);
         }
         else if(strncmp(buffer_client, Write, sizeof(Write)) == 0)
         {
             char* token = strtok(buffer_client, " ");
             token = strtok(NULL, " ");
             char* file = token;
-            int fd;
-            if(fd = open(file, O_WRONLY | O_APPEND, 0644) < 0)
+            FILE* fd = fopen(file, "wb");
+            if(fd == NULL)
             {
                 perror("[-]File open error");
                 exit(1);
@@ -163,7 +163,7 @@ void client_handler(void* arg)
                 fprintf(fd, "%s", buffer_client);
                 fprintf(fd, "\n");
             }
-            close(fd);
+            fclose(fd);
         }
         else if(strncmp(buffer_client, Retrieve, strlen(Retrieve)) == 0)
         {
@@ -187,6 +187,7 @@ void client_handler(void* arg)
         }
     }
     close(client_sockfd);
+    pthread_exit(NULL);
 }
 
 
