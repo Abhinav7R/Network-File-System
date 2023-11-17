@@ -15,6 +15,7 @@
 
 #include "tries.h"
 #include "lru.h"
+#include "ss_info.h"
 
 #define BUF_SIZE 1024
 

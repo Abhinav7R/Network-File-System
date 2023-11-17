@@ -1,5 +1,7 @@
 #include "lru.h"
 
+lru_head* head;
+
 lru_node* find_and_return(char* filepath, lru_head* head)
 {
     lru_node* temp = head->front;
@@ -138,56 +140,56 @@ void print_lru(lru_head* head)
     }
 }
 
-int main()
-{
-    //to test lru working
-    lru_head* head = init_lru();
-    int n;
-    scanf("%d", &n);
-    for(int i = 0; i < n; i++)
-    {
-        char filepath[100];
-        int storage_server_num;
-        int storage_server_port;
-        char storage_server_ip[100];
-        scanf("%s %d %d %s", filepath, &storage_server_num, &storage_server_port, storage_server_ip);
-        lru_node* node = make_lru_node(filepath, storage_server_num, storage_server_port, storage_server_ip);
-        insert_at_front(node, head);
-    }
-    print_lru(head);
-    printf("\n");
-    delete_last_node(head);
-    print_lru(head);
-    printf("\n");
-    //search a filepath
-    int search_num;
-    scanf("%d", &search_num);
-    while(search_num--)
-    {
-        char filepath[100];
-        scanf("%s", filepath);
-        lru_node* node = find_and_return(filepath, head);
-        if(node != NULL)
-        {
-            printf("%s %d %d %s\n", node->filepath, node->storage_server_num, node->storage_server_port, node->storage_server_ip);
-        }
-        else
-        {
-            printf("Not found\n");
-        }
-    }
-    delete_last_node(head);
-    print_lru(head);
-    printf("\n");
-    //shift to front
-    int shift_num;
-    scanf("%d", &shift_num);
-    while(shift_num--)
-    {
-        char filepath[100];
-        scanf("%s", filepath);
-        shift_node_to_front(filepath, head);
-        print_lru(head);
-    }
-    printf("\n");
-}    
+// int main()
+// {
+//     //to test lru working
+//     head = init_lru();
+//     int n;
+//     scanf("%d", &n);
+//     for(int i = 0; i < n; i++)
+//     {
+//         char filepath[100];
+//         int storage_server_num;
+//         int storage_server_port;
+//         char storage_server_ip[100];
+//         scanf("%s %d %d %s", filepath, &storage_server_num, &storage_server_port, storage_server_ip);
+//         lru_node* node = make_lru_node(filepath, storage_server_num, storage_server_port, storage_server_ip);
+//         insert_at_front(node, head);
+//     }
+//     print_lru(head);
+//     printf("\n");
+//     delete_last_node(head);
+//     print_lru(head);
+//     printf("\n");
+//     //search a filepath
+//     int search_num;
+//     scanf("%d", &search_num);
+//     while(search_num--)
+//     {
+//         char filepath[100];
+//         scanf("%s", filepath);
+//         lru_node* node = find_and_return(filepath, head);
+//         if(node != NULL)
+//         {
+//             printf("%s %d %d %s\n", node->filepath, node->storage_server_num, node->storage_server_port, node->storage_server_ip);
+//         }
+//         else
+//         {
+//             printf("Not found\n");
+//         }
+//     }
+//     delete_last_node(head);
+//     print_lru(head);
+//     printf("\n");
+//     //shift to front
+//     int shift_num;
+//     scanf("%d", &shift_num);
+//     while(shift_num--)
+//     {
+//         char filepath[100];
+//         scanf("%s", filepath);
+//         shift_node_to_front(filepath, head);
+//         print_lru(head);
+//     }
+//     printf("\n");
+// }    

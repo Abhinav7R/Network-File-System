@@ -1,5 +1,8 @@
 #include "headers.h"
 
+extern trie* root;
+extern lru_head* head;
+extern ss_info* array_of_ss_info;
 
     //receive action from client
     //for read: read filename
@@ -19,6 +22,11 @@ int what_to_do(char* input)
         char* filename = strtok(input," ");
         filename = strtok(NULL," ");
         printf("filename: %s\n",filename);
+        lru_node* node_in_cache = find_and_return(filename,head);
+        if(node_in_cache == NULL)
+        {
+            //find in trie
+        }
 
     }
     else if(strncmp(input,"write",strlen("write"))==0)

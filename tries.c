@@ -1,5 +1,7 @@
 #include "tries.h"
 
+trie* root;
+
 //initialise trie
 
 trie* init()

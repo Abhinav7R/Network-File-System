@@ -8,12 +8,19 @@
 // 3] The port on which the Storage Server is listening for connections from clients.
 // 4] The file paths that clients can access on the Storage Server.
 
+extern trie* root;
+extern lru_head* head;
+extern ss_info* array_of_ss_info;
+
+#define naming_server_port 4545
+char* nm_ip = "127.0.0.1";
+
 int main()
 {
     int server_sock;
-    int client_sock;
+    int ss_as_client_sock;
     struct sockaddr_in server_addr;
-    struct sockaddr_in client_addr;
+    struct sockaddr_in ss_as_client_addr;
     socklen_t addr_size;
     char B[1024];
 
@@ -51,16 +58,16 @@ int main()
     printf("[+]Listening for Storage Servers...\n");
 
     // Intialize Tries
-    trie *root = init();
+    root = init();
 
     int count = 0;
 
     while (count < 10)
     {
-        addr_size = sizeof(client_addr);
-        client_sock = accept(server_sock, (struct sockaddr *)&client_addr, &addr_size);
+        addr_size = sizeof(ss_as_client_addr);
+        ss_as_client_sock = accept(server_sock, (struct sockaddr *)&ss_as_client_addr, &addr_size);
 
-        if (client_sock < 0)
+        if (ss_as_client_sock < 0)
         {
             perror("[-]Accept error");
             exit(1);
@@ -68,7 +75,7 @@ int main()
 
         // Receive initialization details from Storage Server
         bzero(B, 1024);
-        if (recv(client_sock, B, sizeof(B), 0) < 0)
+        if (recv(ss_as_client_sock, B, sizeof(B), 0) < 0)
         {
             perror("[-]Receive error");
             exit(1);
@@ -79,11 +86,14 @@ int main()
         int nm_port, client_port;
         sscanf(B, "IP: %s\nNM_PORT: %d\nCLIENT_PORT: %d\n", ip, &nm_port, &client_port);
 
+        // send acknowledgement
+
+        //change below code to 
         // Extract file paths and insert them into Tries
         while (1)
         {
             bzero(B, 1024);
-            if (recv(client_sock, B, sizeof(B), 0) < 0)
+            if (recv(ss_as_client_sock, B, sizeof(B), 0) < 0)
             {
                 perror("[-]Receive error");
                 exit(1);
@@ -104,13 +114,13 @@ int main()
         bzero(B, 1024);
         strcpy(B, "Connection successful");
 
-        if (send(client_sock, B, sizeof(B), 0) < 0)
+        if (send(ss_as_client_sock, B, sizeof(B), 0) < 0)
         {
             perror("[-]Send error");
             exit(1);
         }
 
-        close(client_sock);
+        close(ss_as_client_sock);
     }
 
     printf("[+]All Storage Servers connected. Now accepting client connections.\n");
