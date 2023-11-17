@@ -17,6 +17,12 @@ char* nm_ip = "127.0.0.1";
 
 int main()
 {
+    init_ss_info();
+    // Intialize Tries
+    root = init();
+    // Initialize LRU Cache
+    head = init_lru();
+
     int server_sock;
     int ss_as_client_sock;
     struct sockaddr_in server_addr;
@@ -36,8 +42,8 @@ int main()
     memset(&server_addr, '\0', sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     // Replace with the desired port
-    server_addr.sin_port = htons(1234);
-    server_addr.sin_addr.s_addr = INADDR_ANY;
+    server_addr.sin_port = htons(naming_server_port);
+    server_addr.sin_addr.s_addr = inet_addr(nm_ip);
 
     // Bind the server socket
     int n = bind(server_sock, (struct sockaddr *)&server_addr, sizeof(server_addr));
@@ -46,10 +52,10 @@ int main()
         perror("[-]Bind error");
         exit(1);
     }
-    printf("[+]Bind to port 1234\n");
+    printf("[+]Bind to port \n");
 
     // Listen for incoming connections
-    int m = listen(server_sock, 5);
+    int m = listen(server_sock, NUM_STORAGE_SERVERS);
     if (m < 0)
     {
         perror("[-]Listen error");
@@ -57,12 +63,13 @@ int main()
     }
     printf("[+]Listening for Storage Servers...\n");
 
-    // Intialize Tries
-    root = init();
+    
 
     int count = 0;
 
-    while (count < 10)
+    // Accept connections from Storage Servers
+    //for now from 1 storage server
+    while (count < 1)
     {
         addr_size = sizeof(ss_as_client_addr);
         ss_as_client_sock = accept(server_sock, (struct sockaddr *)&ss_as_client_addr, &addr_size);
@@ -87,6 +94,13 @@ int main()
         sscanf(B, "IP: %s\nNM_PORT: %d\nCLIENT_PORT: %d\n", ip, &nm_port, &client_port);
 
         // send acknowledgement
+        bzero(B, 1024);
+        strcpy(B, "Connection successful");
+        if (send(ss_as_client_sock, B, sizeof(B), 0) < 0)
+        {
+            perror("[-]Send error");
+            exit(1);
+        }
 
         //change below code to 
         // Extract file paths and insert them into Tries
@@ -112,7 +126,7 @@ int main()
 
         // Acknowledge connection
         bzero(B, 1024);
-        strcpy(B, "Connection successful");
+        strcpy(B, "Filepaths received");
 
         if (send(ss_as_client_sock, B, sizeof(B), 0) < 0)
         {
