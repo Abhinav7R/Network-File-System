@@ -1,5 +1,18 @@
-#include "headers.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <time.h>
+#include <pthread.h>
+#include <sys/stat.h>
+
 #define PORT 4545
+
 char* Read = "read";
 char* Write = "write";
 char* Retrieve = "retrieve";
@@ -68,6 +81,16 @@ void* nm_handler_for_ops(void* arg)
         exit(1);
     }
     printf("[+]Naming server connected.\n");
+
+    while(1)
+    {
+        bzero(buffer_nm, 1024);
+        if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+        {
+            perror("[-]Receive error");
+            exit(1);
+        }
+    }
 
     pthread_exit(NULL);
 }
@@ -194,20 +217,21 @@ void* client_handler(void* arg)
 //storage server implementation for NFS
 int main(int argc, char *argv[])
 {
-    if(argc != 3)
-    {
-        printf("Usage: %s <nm_port> <client_port>\n", argv[0]);
-        exit(1);
-    }
+    // if(argc != 3)
+    // {
+    //     printf("Usage: %s <nm_port> <client_port>\n", argv[0]);
+    //     exit(1);
+    // }
     
     char* ip = "127.0.0.1";
-    int nm_port = atoi(argv[2]);
-    int client_port = atoi(argv[3]);
+    // int nm_port = atoi(argv[2]);
+    // int client_port = atoi(argv[3]);
+    int nm_port = 4545;
+    int client_port = 7070;
 
     printf("IP: %s\nNM_PORT: %d\nCLIENT_PORT: %d\nEnter file paths(relative to current directory) that the clients can access: (Enter 'DONE' when finished)\n", ip, nm_port, client_port);
 
     files head = (files)malloc(sizeof(filepaths));
-    head->next = NULL;
     files temp = head;
     while(1)
     {
@@ -215,16 +239,16 @@ int main(int argc, char *argv[])
         scanf("%s", path);
         if(strcmp(path, "DONE") == 0)
             break;
-        temp->name = path;
+        temp->name = (char*)malloc(sizeof(char)*100);
+        strcpy(temp->name, path);
         temp->next = (files)malloc(sizeof(filepaths));
         temp = temp->next;
-        temp->next = NULL;
     }
 
     char* paths_of_all = (char*)malloc(sizeof(char)*60000);
     strcpy(paths_of_all, head->name);
     head = head->next;
-    while(head != NULL)
+    while(head->name != NULL)
     {
         strcat(paths_of_all, "|");
         strcat(paths_of_all, head->name);
