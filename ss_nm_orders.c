@@ -1,7 +1,9 @@
 #include "ss_nm_orders.h"
 
-void make_file(char* file, char* buffer_nm, int nm_sockfd)
+void make_file(char* file, int nm_sockfd)
 {
+    char buffer_nm[1024];
+    bzero(buffer_nm, 1024);
     int fd = open(file, O_CREAT, 0666);
     sprintf(buffer_nm, "%d", fd);
     if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
@@ -17,8 +19,10 @@ void make_file(char* file, char* buffer_nm, int nm_sockfd)
     close(fd);
 }
 
-void del_file(char* file, char* buffer_nm, int nm_sockfd)
+void del_file(char* file, int nm_sockfd)
 {
+    char buffer_nm[1024];
+    bzero(buffer_nm, 1024);
     int ack = remove(file);
     sprintf(buffer_nm, "%d", ack);
     if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
@@ -33,8 +37,10 @@ void del_file(char* file, char* buffer_nm, int nm_sockfd)
     }
 }
 
-void delete_dir(char* name, char* buffer_nm, int nm_sockfd)
+void delete_dir(char* name, int nm_sockfd)
 {
+    char buffer_nm[1024];
+    bzero(buffer_nm, 1024);
     DIR* dir = opendir(name);
     if(dir == NULL)
     {
@@ -77,8 +83,10 @@ void delete_dir(char* name, char* buffer_nm, int nm_sockfd)
     }
 }
 
-void make_dir(char* name, char* buffer_nm, int nm_sockfd)
+void make_dir(char* name, int nm_sockfd)
 {
+    char buffer_nm[1024];
+    bzero(buffer_nm, 1024);
     int ack = mkdir(name, 0777);
     sprintf(buffer_nm, "%d", ack);
     if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)

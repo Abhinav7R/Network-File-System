@@ -27,7 +27,6 @@ typedef struct threadargs
     struct sockaddr_in server_addr;
     int server_sock;
     int sockfd;
-    char* buffer;
     int port;
 }threadargs;
 
@@ -47,7 +46,9 @@ void* nm_handler(int nm_sockfd, int port, int client_port, char* ip, char* paths
         perror("[-]Receive error");
         exit(1);
     }
-    if(send(nm_sockfd, paths_of_all, sizeof(paths_of_all), 0) < 0)
+    bzero(buffer_nm, 1024);
+    strcpy(buffer_nm, paths_of_all);
+    if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
     {
         perror("[-]Send error");
         exit(1);
@@ -69,7 +70,7 @@ void* nm_handler_for_ops(void* arg)
     struct sockaddr_in server_addr_1 = args_nm->server_addr;
     int server_sock_1 = args_nm->server_sock;
     int nm_sockfd = args_nm->sockfd;
-    char* buffer_nm = args_nm->buffer;
+    char buffer_nm[1024];
     int nm_port = args_nm->port;
 
     server_sock_1 = socket(AF_INET, SOCK_STREAM, 0);
@@ -111,7 +112,7 @@ void* nm_handler_for_ops(void* arg)
             token = strtok(NULL, " ");
             char* file = token;
 
-            make_file(file, buffer_nm, nm_sockfd);
+            make_file(file, nm_sockfd);
         }
         else if(strncmp(delete_file, buffer_nm, strlen(delete_file)) == 0)
         {
@@ -119,7 +120,7 @@ void* nm_handler_for_ops(void* arg)
             token = strtok(NULL, " ");
             char* file = token;
 
-            del_file(file, buffer_nm, nm_sockfd);
+            del_file(file, nm_sockfd);
         }
         else if(strncmp(delete_folder, buffer_nm, strlen(delete_folder)) == 0)
         {
@@ -127,7 +128,7 @@ void* nm_handler_for_ops(void* arg)
             token = strtok(NULL, " ");
             char* file = token;
 
-            delete_dir(file, buffer_nm, nm_sockfd);
+            delete_dir(file, nm_sockfd);
         }
         else if(strncmp(create_folder, buffer_nm, strlen(create_folder)) == 0)
         {
@@ -135,7 +136,7 @@ void* nm_handler_for_ops(void* arg)
             token = strtok(NULL, " ");
             char* file = token;
 
-            make_dir(file, buffer_nm, nm_sockfd);
+            make_dir(file, nm_sockfd);
         }
         else if(strncmp(copy_file, buffer_nm, strlen(copy_file)) == 0)
         {
@@ -158,7 +159,7 @@ void* client_handler(void* arg)
     struct sockaddr_in server_addr_2 = args_client->server_addr;
     int server_sock_2 = args_client->server_sock;
     int client_sockfd = args_client->sockfd;
-    char* buffer_client = args_client->buffer;
+    char buffer_client[1024];
     int client_port = args_client->port;
 
     server_sock_2 = socket(AF_INET, SOCK_DGRAM, 0);
@@ -200,7 +201,7 @@ void* client_handler(void* arg)
             token = strtok(NULL, " ");
             char* file = token;
 
-            read_file(file, buffer_client, client_sockfd);
+            read_file(file, client_sockfd);
         }
         else if(strncmp(buffer_client, Write, sizeof(Write)) == 0)
         {
@@ -208,7 +209,7 @@ void* client_handler(void* arg)
             token = strtok(NULL, " ");
             char* file = token;
 
-            write_file(file, buffer_client, client_sockfd);
+            write_file(file, client_sockfd);
         }
         else if(strncmp(buffer_client, Retrieve, strlen(Retrieve)) == 0)
         {
@@ -216,7 +217,7 @@ void* client_handler(void* arg)
             token = strtok(NULL, " ");
             char* file = token;
             
-            retrieve_info(file, buffer_client, client_sockfd);
+            retrieve_info(file, client_sockfd);
         }
     }
     close(client_sockfd);
@@ -272,7 +273,6 @@ int main(int argc, char *argv[])
     int socky, server_sock_1, server_sock_2, nm_sockfd, client_sockfd;
     struct sockaddr_in server_addr_1, server_addr_2, nm_addr, cliett_addr;
     socklen_t addr_size;
-    char buffer_nm[1024], buffer_client[1024];
 
     socky = socket(PF_INET, SOCK_STREAM, 0);
     if(server_sock_1 < 0)
@@ -304,7 +304,6 @@ int main(int argc, char *argv[])
     args_nm->server_addr = server_addr_1;
     args_nm->server_sock = server_sock_1;
     args_nm->sockfd = nm_sockfd;
-    args_nm->buffer = buffer_nm;
     args_nm->port = nm_port;
     nm_handler_for_ops((void*)args_nm);
     if(pthread_create(&input[0], NULL, nm_handler_for_ops, (void*)args_nm) != 0)
@@ -317,7 +316,6 @@ int main(int argc, char *argv[])
     args_client->server_addr = server_addr_2;
     args_client->server_sock = server_sock_2;
     args_client->sockfd = client_sockfd;
-    args_client->buffer = buffer_client;
     args_client->port = client_port;
     if(pthread_create(&input[1], NULL, client_handler, (void*)args_client) != 0)
         printf("[-]Thread creation error.\n");

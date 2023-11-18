@@ -1,7 +1,8 @@
 #include "ss_client_orders.h"
 
-void read_file(char* file, char* buffer_client, int client_sockfd)
+void read_file(char* file, int client_sockfd)
 {
+    char buffer_client[1024];
     FILE* fd = fopen(file, "rb");
     if(fd == NULL)
     {
@@ -38,8 +39,9 @@ void read_file(char* file, char* buffer_client, int client_sockfd)
     fclose(fd);
 }
 
-void write_file(char* file, char* buffer_client, int client_sockfd)
+void write_file(char* file, int client_sockfd)
 {
+    char buffer_client[1024];
     FILE* fd = fopen(file, "wb");
     if(fd == NULL)
     {
@@ -62,8 +64,9 @@ void write_file(char* file, char* buffer_client, int client_sockfd)
     fclose(fd);
 }
 
-void retrieve_info(char* file, char* buffer_client, int client_sockfd)
+void retrieve_info(char* file, int client_sockfd)
 {
+    char buffer_client[1024];
     struct stat fileStat;
     if(stat(file, &fileStat) < 0)
     {
