@@ -42,9 +42,12 @@ void insert(trie* root, char* str, int server_num)
 
 int search(trie* root, char* str)
 {
+    if(str[strlen(str)-1] == '\n')
+        str[strlen(str)-1] = '\0';
     trie* p = root;
     for (int i = 0; i < strlen(str); i++)
     {
+        
         if (p->next[str[i]] == NULL)
         {
             return 0;
@@ -109,9 +112,10 @@ void print_all_strings_in_trie(trie* root)
 //         char str[100];
 //         scanf("%s",str);
 //         insert(root,str,i+1);
-//         if(search(root,str))
+//         int ss_num=search(root,str);
+//         if(ss_num>0)
 //         {
-//             printf("found %s\n",str);
+//             printf("found %s %d\n",str,ss_num);
 //         }
 //         else
 //         {

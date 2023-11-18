@@ -29,6 +29,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             printf("not in cache\n");
             // find in trie
             int ss_num = search(root, filename);
+            printf("ss_num: %d\n", ss_num);
             if (ss_num == 0)
             {
                 // send -1 as acknm_sock_for_client
@@ -45,11 +46,15 @@ int what_to_do(char *input, int nm_sock_for_client)
             {
                 printf("found in trie\n");
                 char send_details_to_client[BUF_SIZE];
-                int port = array_of_ss_info[ss_num - 1].ss_client_port;
-                char ss_ip[21];
-                strcpy(ss_ip, array_of_ss_info[ss_num - 1].ss_ip);
+                int port = array_of_ss_info[ss_num].ss_client_port;
+                strcpy(send_details_to_client, array_of_ss_info[ss_num].ss_ip);
+                
                 // concatenate ip and port as a string separated by space
-                sprintf(send_details_to_client, "%s %d", ss_ip, port);
+                char port_as_string[100];
+                sprintf(port_as_string, " %d", port);
+                strcat(send_details_to_client,port_as_string);
+                
+                printf("whats sent to client: %s#\n",send_details_to_client);
                 if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
                 {
                     perror("send() error");

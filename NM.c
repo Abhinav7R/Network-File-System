@@ -108,6 +108,8 @@ int main()
             exit(1);
         }
         //insert data in array_of_ss_info
+        printf("count %d\n",count);
+        printf("nmport: %d, clientport: %d\n",nm_port,client_port);
         insert_ss_info(count, client_port, nm_port, ip);
 
         // Extract file paths and insert them into Tries
