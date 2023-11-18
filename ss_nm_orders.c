@@ -64,7 +64,7 @@ void delete_dir(char* name, int nm_sockfd)
             continue;
         }
         if(S_ISDIR(statbuff.st_mode))
-            delete_dir(path, buffer_nm, nm_sockfd);
+            delete_dir(path, nm_sockfd);
         else
         {
             int ack = remove(path);
