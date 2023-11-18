@@ -336,9 +336,168 @@ int what_to_do(char *input, int nm_sock_for_client)
     }
     else if (strncmp(input, "create_folder", strlen("create folder")) == 0)
     {
+        // command: create_folder folderpath
+        char temp[1024];
+        strcpy(temp, input);
+        char *file_path = strtok(temp, " ");
+        file_path = strtok(NULL, " ");
+
+        // Checking if the folder already exists in the trie
+        if (search(root, file_path) > 0)
+        {
+            // Send -1 acknowledgment to the client
+            char send_details_to_client[BUF_SIZE];
+            sprintf(send_details_to_client, "%d", -1);
+            if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+            return 0;
+        }
+        else
+        {
+            // Extract parent directory path
+            char dir_path[1024];
+            strcpy(dir_path, file_path);
+
+            char *remove_file_name = strrchr(dir_path, '/');
+            if (remove_file_name != NULL)
+                *remove_file_name = '\0';
+
+            // Find Storage Server number
+            int ss_num = search(root, dir_path);
+            if (ss_num == 0)
+            {
+                char send_details_to_client[BUF_SIZE];
+                sprintf(send_details_to_client, "%d", -1);
+                if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
+                {
+                    perror("send() error");
+                    exit(1);
+                }
+                return 0;
+            }
+            // Retrieve Storage Server information
+            int ss_client_port = array_of_ss_info[ss_num].ss_client_port;
+            int ss_nm_port = array_of_ss_info[ss_num].ss_nm_port;
+            char *ss_ip = array_of_ss_info[ss_num].ss_ip;
+
+            // Make a connection with the Storage Server
+            int sock2;
+            struct sockaddr_in serv_addr2;
+            char buffer[1024];
+
+            // Create socket
+            sock2 = socket(AF_INET, SOCK_STREAM, 0);
+            if (sock2 == -1)
+            {
+                perror("socket() error");
+                exit(1);
+            }
+
+            memset(&serv_addr2, 0, sizeof(serv_addr2));
+            serv_addr2.sin_family = AF_INET;
+            serv_addr2.sin_addr.s_addr = inet_addr(ss_ip);
+            serv_addr2.sin_port = htons(ss_nm_port);
+
+            // Connect to Storage Server
+            if (connect(sock2, (struct sockaddr *)&serv_addr2, sizeof(serv_addr2)) == -1)
+            {
+                perror("connect() error");
+                exit(1);
+            }
+
+            // Send input to Storage Server
+            if (send(sock2, input, strlen(input), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+
+            // Receive Acknowledgement from SS (waiting for Agrim)
+
+            // Insert into trie
+            insert(root, file_path, ss_num);
+
+            // Insert into LRU
+            lru_node *new_lru_node = make_lru_node(file_path, ss_num, ss_client_port, ss_ip);
+            insert_at_front(new_lru_node, head);
+
+            // Send Ack to client that opeartion is successfull
+
+            close(sock2);
+        }
     }
     else if (strncmp(input, "delete_folder", strlen("delete folder")) == 0)
     {
+        // command: delete_folder folderpath
+        char temp[1024];
+        strcpy(temp, input);
+        char *file_path = strtok(temp, " ");
+        file_path = strtok(NULL, " ");
+
+        int ss_num = search(root, file_path);
+
+        if (ss_num <= 0)
+        {
+            char send_details_to_client[BUF_SIZE];
+            sprintf(send_details_to_client, "%d", -1);
+            if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+            return 0;
+        }
+        else if (ss_num > 0)
+        {
+            // Retrieve Storage Server information
+            int ss_client_port = array_of_ss_info[ss_num].ss_client_port;
+            int ss_nm_port = array_of_ss_info[ss_num].ss_nm_port;
+            char *ss_ip = array_of_ss_info[ss_num].ss_ip;
+
+            // Make a connection with the Storage Server
+            int sock2;
+            struct sockaddr_in serv_addr2;
+            char buffer[1024];
+
+            // Create socket
+            sock2 = socket(AF_INET, SOCK_STREAM, 0);
+            if (sock2 == -1)
+            {
+                perror("socket() error");
+                exit(1);
+            }
+
+            memset(&serv_addr2, 0, sizeof(serv_addr2));
+            serv_addr2.sin_family = AF_INET;
+            serv_addr2.sin_addr.s_addr = inet_addr(ss_ip);
+            serv_addr2.sin_port = htons(ss_nm_port);
+
+            // Connect to Storage Server
+            if (connect(sock2, (struct sockaddr *)&serv_addr2, sizeof(serv_addr2)) == -1)
+            {
+                perror("connect() error");
+                exit(1);
+            }
+
+            // Send input to Storage Server
+            if (send(sock2, input, strlen(input), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+
+            // Receive Ack from Storage Server
+
+            close(sock2);
+            // Delete the file path from the trie
+            delete_node(root, file_path);
+            // Search and delete from the LRU cache
+            lru_node *deleted_node = delete_lru_node(file_path, head);
+            free(deleted_node);
+        }
     }
     else if (strncmp(input, "copy_folder", strlen("copy folder")) == 0)
     {
