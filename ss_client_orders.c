@@ -12,7 +12,6 @@ void read_file(char* file, int client_sockfd)
     fseek(fd, 0, SEEK_END);
     long size = ftell(fd);
     fseek(fd, 0, SEEK_SET);
-    printf("size: %ld\n", size);
     long num_packets = size/1024;
     if(size%1024 != 0)
         num_packets++;
@@ -29,7 +28,6 @@ void read_file(char* file, int client_sockfd)
         perror("[-]Receive error");
         exit(1);
     }
-    printf("received ack\n");
     while(num_packets--)
     {
         bzero(buffer_client, 1024);
