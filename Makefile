@@ -1,4 +1,4 @@
-all: naming_server storage_server
+all: naming_server storage_server client
 
 naming_server: tries.c lru.c ss_info.c nm_functions.c NM.c
 	gcc -o naming_server tries.c lru.c ss_info.c nm_functions.c NM.c 

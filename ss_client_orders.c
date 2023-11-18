@@ -12,16 +12,24 @@ void read_file(char* file, int client_sockfd)
     fseek(fd, 0, SEEK_END);
     long size = ftell(fd);
     fseek(fd, 0, SEEK_SET);
+    printf("size: %ld\n", size);
     long num_packets = size/1024;
     if(size%1024 != 0)
         num_packets++;
     bzero(buffer_client, 1024);
     sprintf(buffer_client, "%ld", num_packets);
-    if(send(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
+    if(send(client_sockfd, buffer_client, BUF_SIZE, 0) < 0)
     {
         perror("[-]Send error");
         exit(1);
     }
+    bzero(buffer_client, 1024);
+    if(recv(client_sockfd, buffer_client, BUF_SIZE, 0) < 0)
+    {
+        perror("[-]Receive error");
+        exit(1);
+    }
+    printf("received ack\n");
     while(num_packets--)
     {
         bzero(buffer_client, 1024);
@@ -33,6 +41,12 @@ void read_file(char* file, int client_sockfd)
         if(send(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
         {
             perror("[-]Send error");
+            exit(1);
+        }
+        bzero(buffer_client, 1024);
+        if(recv(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
+        {
+            perror("[-]Receive error");
             exit(1);
         }
     }

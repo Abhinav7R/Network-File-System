@@ -95,13 +95,12 @@ int main()
 
             char *server_ip = strtok(buf," ");
             char *server_port = strtok(NULL," ");
-            printf("ip: %s port: %s\n",server_ip,server_port);
+            printf("ip: %s \tport: %s\n",server_ip,server_port);
 
             //connect to storage server
             int sock2;
             struct sockaddr_in serv_addr2;
             char buf2[BUF_SIZE];
-            int read_cnt2;
 
             // Create socket
             sock2 = socket(PF_INET, SOCK_STREAM, 0);
@@ -114,8 +113,8 @@ int main()
             // Initialize serv_addr
             memset(&serv_addr2, 0, sizeof(serv_addr2)); //init
             serv_addr2.sin_family = AF_INET;
-            serv_addr2.sin_addr.s_addr = inet_addr(server_ip);
             serv_addr2.sin_port = htons(atoi(server_port));
+            serv_addr2.sin_addr.s_addr = inet_addr(server_ip);
 
             // Connect to server
             if(connect(sock2, (struct sockaddr*)&serv_addr2, sizeof(serv_addr2)) == -1)
@@ -123,6 +122,7 @@ int main()
                 perror("connect() error");
                 exit(1);
             }
+            printf("connected to storage server\n");
 
             //if input is read then receive data from storage server
             //if input is write then send data to storage server
@@ -130,26 +130,32 @@ int main()
 
             if(strncmp(input,"read",strlen("read"))==0)
             {
-                if(send(sock2,input,strlen(input),0)<0)
+                if(send(sock2,input,BUF_SIZE,0)<0)
                 {
                     perror("send() error");
                     exit(1);
                 }
+                printf("sent read to storage server\n");
                 //receive data from storage server
-                //first receive number of packets as integer
+                //first receive number of packets as integer    
                 char num_packets[BUF_SIZE];
-                if(recv(sock2,&num_packets,sizeof(num_packets),0)<0)
+                bzero(num_packets,BUF_SIZE);
+                if(recv(sock2,num_packets,BUF_SIZE,0)<0)
                 {
                     perror("recv() error");
                     exit(1);
                 }
-                printf("num packets %s\n",num_packets);
                 int num_packets_int = atoi(num_packets);
-                printf("num packets %d\n",num_packets_int);
                 bzero(buf2,BUF_SIZE);
-                //recv data from storage server
+                if(send(sock2,"ack",strlen("ack"),0)<0)
+                {
+                    perror("send() error");
+                    exit(1);
+                }
+                // recv data from storage server
                 while(num_packets_int--)
                 {
+                    bzero(buf2,BUF_SIZE);
                     if(recv(sock2,buf2,BUF_SIZE,0)<0)
                     {
                         perror("recv() error");
@@ -157,7 +163,13 @@ int main()
                     }
                     printf("%s",buf2);
                     bzero(buf2,BUF_SIZE);
+                    if(send(sock2,"ack",strlen("ack"),0)<0)
+                    {
+                        perror("send() error");
+                        exit(1);
+                    }
                 }
+                printf("\n");
             }
             else if(strncmp(input,"write",strlen("write"))==0)
             {
