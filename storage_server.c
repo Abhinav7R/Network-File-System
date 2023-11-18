@@ -88,12 +88,19 @@ void* nm_handler_for_ops(void* arg)
         perror("[-]Bind error");
         exit(1);
     }
+    printf("[+]Bind to port for naming server\n");
+    int l = listen(server_sock_1, 100);
+    if(l < 0)
+    {
+        perror("[-]Listen error NM");
+        exit(1);
+    }
 
     addr_size = sizeof(server_addr_1);
     nm_sockfd = accept(server_sock_1, (struct sockaddr*)&server_addr_1, &addr_size);
     if(nm_sockfd < 0)
     {
-        perror("[-]Accept error");
+        perror("[-]Accept error NM");
         exit(1);
     }
     printf("[+]Naming server connected.\n");
@@ -162,7 +169,7 @@ void* client_handler(void* arg)
     char buffer_client[1024];
     int client_port = args_client->port;
 
-    server_sock_2 = socket(AF_INET, SOCK_DGRAM, 0);
+    server_sock_2 = socket(AF_INET, SOCK_STREAM, 0);
     if(server_sock_2 < 0)
     {
         perror("[-]Socket error");
@@ -177,12 +184,19 @@ void* client_handler(void* arg)
         perror("[-]Bind error");
         exit(1);
     }
+    printf("[+]Bind to port for clients\n");
+    int l = listen(server_sock_2, 100);
+    if(l < 0)
+    {
+        perror("[-]Listen error Client");
+        exit(1);
+    }
 
     addr_size = sizeof(server_addr_2);
     client_sockfd = accept(server_sock_2, (struct sockaddr*)&server_addr_2, &addr_size);
     if(client_sockfd < 0)
     {
-        perror("[-]Accept error");
+        perror("[-]Accept error Client");
         exit(1);
     }
     printf("[+]Client connected.\n");
@@ -294,6 +308,7 @@ int main(int argc, char *argv[])
     }
     //sending storage server info to naming server
     nm_handler(socky, nm_port, client_port, ip, paths_of_all);
+    printf("[+]Naming server info sent.\n");
 
     pthread_t input[2];
     addr_size = sizeof(server_addr_1);
@@ -305,9 +320,9 @@ int main(int argc, char *argv[])
     args_nm->server_sock = server_sock_1;
     args_nm->sockfd = nm_sockfd;
     args_nm->port = nm_port;
-    nm_handler_for_ops((void*)args_nm);
     if(pthread_create(&input[0], NULL, nm_handler_for_ops, (void*)args_nm) != 0)
         printf("[-]Thread creation error.\n");
+    sleep(0.001);
 
     //thread for client
     addr_size = sizeof(server_addr_2);
@@ -319,6 +334,12 @@ int main(int argc, char *argv[])
     args_client->port = client_port;
     if(pthread_create(&input[1], NULL, client_handler, (void*)args_client) != 0)
         printf("[-]Thread creation error.\n");
-        
+    sleep(0.001);
+
+    for(int i=0; i<2; i++)
+    {
+        pthread_join(input[i], NULL);
+    }
+
     return 0;
 }
