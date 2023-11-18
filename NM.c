@@ -13,6 +13,7 @@ extern lru_head* head;
 extern ss_info* array_of_ss_info;
 
 #define naming_server_port 4545
+#define nm_port_for_clients 4546
 char* nm_ip = "127.0.0.1";
 
 int what_to_do(char* input, int nm_sock_for_client);
@@ -100,7 +101,7 @@ int main()
 
         // send acknowledgement
         bzero(B, 1024);
-        strcpy(B, "Connection successful");
+        strcpy(B, "1st set of details received");
         if (send(ss_as_client_sock, B, sizeof(B), 0) < 0)
         {
             perror("[-]Send error");
@@ -134,6 +135,12 @@ int main()
         }
 
         close(ss_as_client_sock);
+        //reuse the socket
+        if(setsockopt(server_sock, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0)
+        {
+            perror("setsockopt(SO_REUSEADDR) failed");
+            exit(1);
+        }
     }
 
     printf("[+]All Storage Servers connected. Now accepting client connections.\n");
@@ -161,7 +168,7 @@ int main()
 
     memset(&nm_addr_for_client, '\0', sizeof(nm_addr_for_client)); //init
     nm_addr_for_client.sin_family = AF_INET;
-    nm_addr_for_client.sin_port = htons(naming_server_port);
+    nm_addr_for_client.sin_port = htons(nm_port_for_clients);
     nm_addr_for_client.sin_addr.s_addr = inet_addr(nm_ip);
 
     int nn = bind(nm_sock_for_client, (struct sockaddr*)&nm_addr_for_client, sizeof(nm_addr_for_client));
@@ -200,13 +207,13 @@ int main()
     }
 
     char input[BUF_SIZE];
-    if(recv(client_sock,buf,BUF_SIZE,0)<0)
+    if(recv(client_sock,input,BUF_SIZE,0)<0)
     {
         perror("recv() error");
         exit(1);
     }
 
-    
+    printf("Received from client: %s\n",buf);
     what_to_do(input,client_sock);
     
     // Close the Naming Server socket for storage server

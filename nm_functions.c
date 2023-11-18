@@ -17,6 +17,7 @@ extern ss_info *array_of_ss_info;
 
 int what_to_do(char *input, int nm_sock_for_client)
 {
+    printf("input: %s\n", input);
     if ((strncmp(input, "read", strlen("read")) == 0) || (strncmp(input, "retrieve", strlen("retrieve")) == 0))
     {
         char *filename = strtok(input, " ");

@@ -5,7 +5,7 @@
 int main()
 {
     char *nm_ip = "127.0.0.1";    // ip address of Naming Server
-    int nm_port = 1234;        // port number of Naming Server
+    int nm_port = 4546;        // port number of Naming Server
     int sock;
     struct sockaddr_in serv_addr;
     char buf[BUF_SIZE];
