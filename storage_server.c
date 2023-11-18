@@ -304,7 +304,7 @@ int main(int argc, char *argv[])
         head = head->next;
     }
     strcat(paths_of_all, "|");
-    printf("%s\n", paths_of_all);
+    // printf("%s\n", paths_of_all);
     
     //defining sockets and buffers
     int socky, server_sock_1, server_sock_2, nm_sockfd, client_sockfd;

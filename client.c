@@ -65,6 +65,7 @@ int main()
     {
 
         char input[BUF_SIZE];
+        bzero(input,BUF_SIZE);
         printf("Enter action: \n");
         fgets(input,100,stdin);
 
@@ -72,6 +73,13 @@ int main()
         {
             break;
         }
+
+        while(input[strlen(input)-1] == '\n')
+        {
+            input[strlen(input)-1] = '\0';
+        }
+        // printf("input: %s\n",input);
+        // printf("strlen: %ld\n", strlen(input));
 
         if(send(sock,input,strlen(input),0)<0)
         {

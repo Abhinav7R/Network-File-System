@@ -17,7 +17,7 @@ extern ss_info *array_of_ss_info;
 
 int what_to_do(char *input, int nm_sock_for_client)
 {
-    printf("input: %s\n", input);
+    // printf("input: %s\n", input);
     if ((strncmp(input, "read", strlen("read")) == 0) || (strncmp(input, "retrieve", strlen("retrieve")) == 0))
     {
         char *filename = strtok(input, " ");
@@ -243,7 +243,9 @@ int what_to_do(char *input, int nm_sock_for_client)
             }
 
             // Receive Acknowledgement from SS (waiting for Agrim)
-
+            // 1 for Success, -1 for Failure
+            //send the same to client
+            
             // Insert into trie
             insert(root, file_path, ss_num);
 
@@ -316,6 +318,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 perror("connect() error");
                 exit(1);
             }
+            printf("Connected to Storage Server\n");
 
             // Send input to Storage Server
             if (send(sock2, input, strlen(input), 0) < 0)

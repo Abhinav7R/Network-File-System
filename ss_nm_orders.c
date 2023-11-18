@@ -2,7 +2,7 @@
 
 void make_file(char* file, int nm_sockfd)
 {
-    printf("create file %s\n", file);
+    // printf("create file %s\n", file);
     char buffer_nm[1024];
     bzero(buffer_nm, 1024);
     // int fd = open(file, O_CREAT | O_RDWR, 0777);
@@ -110,6 +110,7 @@ void delete_dir(char* name, int nm_sockfd)
             }
         }
     }
+    rmdir(name);
 }
 
 void make_dir(char* name, int nm_sockfd)
