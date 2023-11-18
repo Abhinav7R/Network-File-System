@@ -146,6 +146,7 @@ void* nm_handler_for_ops(void* arg)
         }
     }
     close(nm_sockfd);
+    close(server_sock_1);
     pthread_exit(NULL);
 }
 
@@ -218,6 +219,7 @@ void* client_handler(void* arg)
         }
     }
     close(client_sockfd);
+    close(server_sock_2);
     pthread_exit(NULL);
 }
 
@@ -252,6 +254,7 @@ int main(int argc, char *argv[])
         temp = temp->next;
     }
 
+    //concatenation of file names
     char* paths_of_all = (char*)malloc(sizeof(char)*60000);
     strcpy(paths_of_all, head->name);
     head = head->next;
@@ -264,6 +267,7 @@ int main(int argc, char *argv[])
     strcat(paths_of_all, "|");
     printf("%s\n", paths_of_all);
     
+    //defining sockets and buffers
     int socky, server_sock_1, server_sock_2, nm_sockfd, client_sockfd;
     struct sockaddr_in server_addr_1, server_addr_2, nm_addr, cliett_addr;
     socklen_t addr_size;
@@ -276,6 +280,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    //connecting to naming server as a client
     memset(&server_addr_1, '\0', sizeof(server_addr_1));
     server_addr_1.sin_family = AF_INET;
     server_addr_1.sin_port = htons(PORT);
@@ -286,11 +291,13 @@ int main(int argc, char *argv[])
         perror("[-]Connect error");
         exit(1);
     }
+    //sending storage server info to naming server
     nm_handler(buffer_nm, socky, nm_port, client_port, ip, paths_of_all);
 
-    //separate threads for clients and naming server
     pthread_t input[2];
     addr_size = sizeof(server_addr_1);
+
+    //thread for naming server
     args args_nm = (args)malloc(sizeof(threadargs));
     args_nm->addr_size = addr_size;
     args_nm->server_addr = server_addr_1;
@@ -302,6 +309,7 @@ int main(int argc, char *argv[])
     if(pthread_create(&input[0], NULL, nm_handler_for_ops, (void*)args_nm) != 0)
         printf("[-]Thread creation error.\n");
 
+    //thread for client
     addr_size = sizeof(server_addr_2);
     args args_client = (args)malloc(sizeof(threadargs));
     args_client->addr_size = addr_size;  
@@ -312,8 +320,6 @@ int main(int argc, char *argv[])
     args_client->port = client_port;
     if(pthread_create(&input[1], NULL, client_handler, (void*)args_client) != 0)
         printf("[-]Thread creation error.\n");
-
-    close(server_sock_1);
-    close(server_sock_2);
+        
     return 0;
 }
