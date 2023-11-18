@@ -16,7 +16,108 @@ extern ss_info* array_of_ss_info;
 #define nm_port_for_clients 4546
 char* nm_ip = "127.0.0.1";
 
+int count = 0;
+pthread_mutex_t count_lock=PTHREAD_MUTEX_INITIALIZER;
+
 int what_to_do(char* input, int nm_sock_for_client);
+
+typedef struct arguments_for_ss_thread
+{
+    int server_sock;
+    struct sockaddr_in server_addr;
+}arguments_for_ss_thread;
+
+void* Handle_SS(void* arguments)
+{
+    arguments_for_ss_thread* args = (arguments_for_ss_thread*)arguments;
+    // Accept connections from Storage Servers
+    int server_sock=args->server_sock;
+    struct sockaddr_in server_addr=args->server_addr;
+    int ss_as_client_sock;
+    struct sockaddr_in ss_as_client_addr;
+    socklen_t addr_size;
+    char B[1024];
+    
+    while (count < NUM_STORAGE_SERVERS)
+    {
+        pthread_mutex_lock(&count_lock);
+        count++;
+        pthread_mutex_unlock(&count_lock);
+
+        addr_size = sizeof(ss_as_client_addr);
+        ss_as_client_sock = accept(server_sock, (struct sockaddr *)&ss_as_client_addr, &addr_size);
+
+        if (ss_as_client_sock < 0)
+        {
+            perror("[-]Accept error");
+            exit(1);
+        }
+
+        // Receive initialization details from Storage Server
+        bzero(B, 1024);
+        if (recv(ss_as_client_sock, B, sizeof(B), 0) < 0)
+        {
+            perror("[-]Receive error");
+            exit(1);
+        }
+        printf("[+]Received from Storage Server:\n%s\n", B);
+
+        // Extract IP, Naming Server Port and Client Port from the received B
+        char ip[21];
+        int nm_port, client_port;
+        sscanf(B, "IP: %s\nNM_PORT: %d\nCLIENT_PORT: %d\n", ip, &nm_port, &client_port);
+
+        // send acknowledgement
+        bzero(B, 1024);
+        strcpy(B, "1st set of details received");
+        if (send(ss_as_client_sock, B, sizeof(B), 0) < 0)
+        {
+            perror("[-]Send error");
+            exit(1);
+        }
+        //insert data in array_of_ss_info
+        printf("count %d\n",count);
+        printf("nmport: %d, clientport: %d\n",nm_port,client_port);
+        insert_ss_info(count, client_port, nm_port, ip);
+
+        // Extract file paths and insert them into Tries
+        // tokenise B on | and insert each token into the Trie
+        bzero(B, 1024);
+        if (recv(ss_as_client_sock, B, sizeof(B), 0) < 0)
+        {
+            perror("[-]Receive error");
+            exit(1);
+        }
+        char* token = strtok(B, "|");
+        while(token != NULL)
+        {
+            insert(root, token, count);
+            token = strtok(NULL, "|");
+        }
+
+
+        // Acknowledge connection
+        bzero(B, 1024);
+        strcpy(B, "Filepaths received");
+
+        if (send(ss_as_client_sock, B, sizeof(B), 0) < 0)
+        {
+            perror("[-]Send error");
+            exit(1);
+        }
+
+        close(ss_as_client_sock);
+        
+        //reuse the socket
+        if(setsockopt(server_sock, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int)) < 0)
+        {
+            perror("setsockopt(SO_REUSEADDR) failed");
+            exit(1);
+        }
+    }
+    
+
+}
 
 int main()
 {
@@ -27,9 +128,9 @@ int main()
     head = init_lru();
 
     int server_sock;
-    int ss_as_client_sock;
+    // int ss_as_client_sock;
     struct sockaddr_in server_addr;
-    struct sockaddr_in ss_as_client_addr;
+    // struct sockaddr_in ss_as_client_addr;
     socklen_t addr_size;
     char B[1024];
 
@@ -66,12 +167,17 @@ int main()
     }
     printf("[+]Listening for Storage Servers...\n");
 
-    
 
-    int count = 0;
+    // Create thread to handle Storage Server connections
+    pthread_t ss_thread_id;
+    arguments_for_ss_thread* arguments=(arguments_for_ss_thread*)malloc(sizeof(arguments_for_ss_thread));
+    arguments->server_sock = server_sock;
+    arguments->server_addr = server_addr;
+    pthread_create(&ss_thread_id, NULL, Handle_SS, (void*)arguments);
 
     // Accept connections from Storage Servers
     //for now from 1 storage server
+    /*
     while (count < 1)
     {
         count++;
@@ -146,12 +252,15 @@ int main()
             exit(1);
         }
     }
+    */
 
-    printf("[+]All Storage Servers connected. Now accepting client connections.\n");
+    // printf("[+]All Storage Servers connected. Now accepting client connections.\n");
 
-    // Print all paths stored in the Trie
-    printf("[+]Paths stored in Trie:\n");
-    print_all_strings_in_trie(root);
+    // // Print all paths stored in the Trie
+    // printf("[+]Paths stored in Trie:\n");
+    // print_all_strings_in_trie(root);
+
+    
 
 
     // Accept CLient connection and process its queries
@@ -213,13 +322,14 @@ int main()
     while(1)
     {
         char input[BUF_SIZE];
+        bzero(input,BUF_SIZE);
         if(recv(client_sock,input,BUF_SIZE,0)<0)
         {
             perror("recv() error");
             exit(1);
         }
 
-        printf("Received from client: %s\n",buf);
+        // printf("Received from client: %s\n",buf);
         what_to_do(input,client_sock);
     }
     
