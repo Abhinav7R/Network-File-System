@@ -1,21 +1,16 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
-#include <time.h>
-#include <pthread.h>
-#include <sys/stat.h>
+#include "headers.h"
 
 #define PORT 4545
 
 char* Read = "read";
 char* Write = "write";
 char* Retrieve = "retrieve";
+char* create_file = "create_file";
+char* delete_file = "delete_file";
+char* copy_file = "copy_file";
+char* create_folder = "create_folder";
+char* delete_folder = "delete_folder";
+char* copy_folder = "copy_folder";
 
 typedef struct filepaths* files;
 typedef struct filepaths
@@ -37,7 +32,7 @@ typedef struct threadargs
 void* nm_handler(char* buffer_nm, int nm_sockfd, int port, int client_port, char* ip, char* paths_of_all)
 {
     bzero(buffer_nm, 1024);
-    sscanf(buffer_nm, "IP: %s\nNM_PORT: %d\nCLIENT PORT: %d\n", ip, &port, &client_port);
+    sprintf(buffer_nm, "IP: %s\nNM_PORT: %d\nCLIENT PORT: %d\n", ip, port, client_port);
     if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
     {
         perror("[-]Send error");
@@ -90,8 +85,48 @@ void* nm_handler_for_ops(void* arg)
             perror("[-]Receive error");
             exit(1);
         }
-    }
+        if(strncmp(create_file, buffer_nm, strlen(create_file)) == 0)
+        {
+            char* token = strtok(buffer_nm, " ");
+            token = strtok(NULL, " ");
+            char* file = token;
 
+            make_file(file, buffer_nm, nm_sockfd);
+        }
+        else if(strncmp(delete_file, buffer_nm, strlen(delete_file)) == 0)
+        {
+            char* token = strtok(buffer_nm, " ");
+            token = strtok(NULL, " ");
+            char* file = token;
+
+            del_file(file, buffer_nm, nm_sockfd);
+        }
+        else if(strncmp(delete_folder, buffer_nm, strlen(delete_folder)) == 0)
+        {
+            char* token = strtok(buffer_nm, " ");
+            token = strtok(NULL, " ");
+            char* file = token;
+
+            delete_dir(file, buffer_nm, nm_sockfd);
+        }
+        else if(strncmp(create_folder, buffer_nm, strlen(create_folder)) == 0)
+        {
+            char* token = strtok(buffer_nm, " ");
+            token = strtok(NULL, " ");
+            char* file = token;
+
+            make_dir(file, buffer_nm, nm_sockfd);
+        }
+        else if(strncmp(copy_file, buffer_nm, strlen(copy_file)) == 0)
+        {
+
+        }
+        else if(strncmp(copy_folder, buffer_nm, strlen(copy_folder)) == 0)
+        {
+
+        }
+    }
+    close(nm_sockfd);
     pthread_exit(NULL);
 }
 
@@ -126,87 +161,24 @@ void* client_handler(void* arg)
             char* token = strtok(buffer_client, " ");
             token = strtok(NULL, " ");
             char* file = token;
-            FILE* fd = fopen(file, "rb");
-            if(fd == NULL)
-            {
-                perror("[-]File open error");
-                exit(1);
-            }
-            fseek(fd, 0, SEEK_END);
-            long size = ftell(fd);
-            fseek(fd, 0, SEEK_SET);
-            fclose(fd);
-            long num_packets = size/1024;
-            if(size%1024 != 0)
-                num_packets++;
-            bzero(buffer_client, 1024);
-            sprintf(buffer_client, "%ld", num_packets);
-            if(send(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
-            {
-                perror("[-]Send error");
-                exit(1);
-            }
-            if(open(file, O_RDONLY) < 0)
-            {
-                perror("[-]File open error");
-                exit(1);
-            }
-            while(num_packets--)
-            {
-                bzero(buffer_client, 1024);
-                if(send(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
-                {
-                    perror("[-]Send error");
-                    exit(1);
-                }
-            }
-            fclose(fd);
+
+            read_file(file, buffer_client, client_sockfd);
         }
         else if(strncmp(buffer_client, Write, sizeof(Write)) == 0)
         {
             char* token = strtok(buffer_client, " ");
             token = strtok(NULL, " ");
             char* file = token;
-            FILE* fd = fopen(file, "wb");
-            if(fd == NULL)
-            {
-                perror("[-]File open error");
-                exit(1);
-            }
-            while(1)
-            {
-                bzero(buffer_client, 1024);
-                if(recv(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
-                {
-                    perror("[-]Receive error");
-                    exit(1);
-                }
-                if(strcmp(buffer_client, "\n") == 0)
-                    break;
-                fprintf(fd, "%s", buffer_client);
-                fprintf(fd, "\n");
-            }
-            fclose(fd);
+
+            write_file(file, buffer_client, client_sockfd);
         }
         else if(strncmp(buffer_client, Retrieve, strlen(Retrieve)) == 0)
         {
             char* token = strtok(buffer_client, " ");
             token = strtok(NULL, " ");
             char* file = token;
-            struct stat fileStat;
-            if(stat(file, &fileStat) < 0)
-            {
-                perror("[-]File stat error");
-                exit(1);
-            }
-            bzero(buffer_client, 1024);
-            //concatenate file size and permissions into buffer
-            sprintf(buffer_client, "%ld %o", fileStat.st_size, fileStat.st_mode);
-            if(send(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
-            {
-                perror("[-]Send error");
-                exit(1);
-            }
+            
+            retrieve_info(file, buffer_client, client_sockfd);
         }
     }
     close(client_sockfd);
@@ -226,7 +198,7 @@ int main(int argc, char *argv[])
     char* ip = "127.0.0.1";
     // int nm_port = atoi(argv[2]);
     // int client_port = atoi(argv[3]);
-    int nm_port = 4545;
+    int nm_port = 4040;
     int client_port = 7070;
 
     printf("IP: %s\nNM_PORT: %d\nCLIENT_PORT: %d\nEnter file paths(relative to current directory) that the clients can access: (Enter 'DONE' when finished)\n", ip, nm_port, client_port);
@@ -255,6 +227,7 @@ int main(int argc, char *argv[])
         head = head->next;
     }
     strcat(paths_of_all, "|");
+    printf("%s\n", paths_of_all);
     
     int socky, server_sock_1, server_sock_2, nm_sockfd, client_sockfd;
     struct sockaddr_in server_addr_1, server_addr_2, nm_addr, cliett_addr;
@@ -267,39 +240,38 @@ int main(int argc, char *argv[])
         perror("[-]Socket error");
         exit(1);
     }
-    // printf("[+]TCP server socket created.\n");
 
     memset(&server_addr_1, '\0', sizeof(server_addr_1));
     server_addr_1.sin_family = AF_INET;
     server_addr_1.sin_port = htons(PORT);
     server_addr_1.sin_addr.s_addr = inet_addr(ip);
 
-    if(connect(server_sock_1, (struct sockaddr*)&server_addr_1, sizeof(server_addr_1)) == -1)
+    if(connect(socky, (struct sockaddr*)&server_addr_1, sizeof(server_addr_1)) == -1)
     {
-        perror("connect() error");
+        perror("[-]Connect error");
         exit(1);
     }
-    nm_handler(buffer_nm, socky, PORT, client_port, ip, paths_of_all);
+    nm_handler(buffer_nm, socky, nm_port, client_port, ip, paths_of_all);
 
     //connecting to client
-    server_sock_2 = socket(AF_INET, SOCK_DGRAM, 0);
-    if(server_sock_2 < 0)
-    {
-        perror("[-]Socket error");
-        exit(1);
-    }
-    memset(&server_addr_2, '\0', sizeof(server_addr_2));
-    server_addr_2.sin_family = AF_INET;
-    server_addr_2.sin_port = htons(client_port);
-    server_addr_2.sin_addr.s_addr = inet_addr(ip);
-    if(bind(server_sock_2, (struct sockaddr*)&server_addr_2, sizeof(server_addr_2)) < 0)
-    {
-        perror("[-]Bind error");
-        exit(1);
-    }
+    // server_sock_2 = socket(AF_INET, SOCK_DGRAM, 0);
+    // if(server_sock_2 < 0)
+    // {
+    //     perror("[-]Socket error");
+    //     exit(1);
+    // }
+    // memset(&server_addr_2, '\0', sizeof(server_addr_2));
+    // server_addr_2.sin_family = AF_INET;
+    // server_addr_2.sin_port = htons(client_port);
+    // server_addr_2.sin_addr.s_addr = inet_addr(ip);
+    // if(bind(server_sock_2, (struct sockaddr*)&server_addr_2, sizeof(server_addr_2)) < 0)
+    // {
+    //     perror("[-]Bind error");
+    //     exit(1);
+    // }
     
     //connecting to naming server
-    server_sock_1 = socket(AF_INET, SOCK_DGRAM, 0);
+    server_sock_1 = socket(AF_INET, SOCK_STREAM, 0);
     if(server_sock_1 < 0)
     {
         perror("[-]Socket error");

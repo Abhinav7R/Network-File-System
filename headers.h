@@ -12,11 +12,14 @@
 #include <fcntl.h>
 #include <time.h>
 #include <pthread.h>
+#include <dirent.h>
 #include <sys/stat.h>
 
 #include "tries.h"
 #include "lru.h"
 #include "ss_info.h"
+#include "ss_nm_orders.h"
+#include "ss_client_orders.h"
 
 #define BUF_SIZE 1024
 
