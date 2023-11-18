@@ -26,6 +26,7 @@ int what_to_do(char *input, int nm_sock_for_client)
         lru_node *node_in_cache = find_and_return(filename, head);
         if (node_in_cache == NULL)
         {
+            printf("not in cache\n");
             // find in trie
             int ss_num = search(root, filename);
             if (ss_num == 0)
@@ -42,6 +43,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             }
             else
             {
+                printf("found in trie\n");
                 char send_details_to_client[BUF_SIZE];
                 int port = array_of_ss_info[ss_num - 1].ss_client_port;
                 char ss_ip[21];

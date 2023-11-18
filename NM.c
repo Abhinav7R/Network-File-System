@@ -107,6 +107,8 @@ int main()
             perror("[-]Send error");
             exit(1);
         }
+        //insert data in array_of_ss_info
+        insert_ss_info(count, client_port, nm_port, ip);
 
         // Extract file paths and insert them into Tries
         // tokenise B on | and insert each token into the Trie
