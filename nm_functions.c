@@ -244,8 +244,8 @@ int what_to_do(char *input, int nm_sock_for_client)
 
             // Receive Acknowledgement from SS (waiting for Agrim)
             // 1 for Success, -1 for Failure
-            //send the same to client
-            
+            // send the same to client
+
             // Insert into trie
             insert(root, file_path, ss_num);
 
@@ -339,6 +339,97 @@ int what_to_do(char *input, int nm_sock_for_client)
     }
     else if (strncmp(input, "copy_file", strlen("copy_file")) == 0)
     {
+        // command: copy_file old_filepath new_folderpath
+        char temp[1024];
+        strcpy(temp, input);
+
+        char *old_filepath;
+        char *new_folderpath;
+
+        // Tokenize the input to extract old_filepath and new_folderpath
+        old_filepath = strtok(temp, " ");
+        old_filepath = strtok(NULL, " ");
+        new_folderpath = strtok(NULL, " ");
+
+        // Check if the file is in the LRU cache
+        lru_node *node_in_cache = find_and_return(old_filepath, head);
+        // File not found in cache
+        if (node_in_cache == NULL)
+        {
+            printf("not in cache\n");
+            // Search in trie
+            int ss_num = search(root, old_filepath);
+            printf("ss_num: %d\n");
+
+            if (ss_num == 0)
+            {
+                // If file not found in trie, send -1 as acknowledgment to the client
+                char send_details_to_client[BUF_SIZE];
+                sprintf(send_details_to_client, "%d", -1);
+                if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
+                {
+                    perror("send() error");
+                    exit(1);
+                }
+                return 0;
+            }
+            else
+            {
+                printf("found in trie\n");
+                // File found in trie
+                // Retrieve Storage Server information
+                int ss_client_port = array_of_ss_info[ss_num].ss_client_port;
+                int ss_nm_port = array_of_ss_info[ss_num].ss_nm_port;
+                char *ss_ip = array_of_ss_info[ss_num].ss_ip;
+            }
+        }
+        // File found in the LRU cache
+        else
+        {
+            // Retrieve Storage Server information
+            int port = node_in_cache->storage_server_port_for_client;
+            char ss_ip[21];
+            strcpy(ss_ip, node_in_cache->storage_server_ip);
+        }
+
+        lru_node *node_in_cache_1 = find_and_return(new_folderpath, head);
+        if (node_in_cache_1 == NULL)
+        {
+            printf("not in cache\n");
+            // Search in trie
+            int ss_num_1 = search(root, new_folderpath);
+            printf("ss_num_1: %d\n");
+
+            if (ss_num_1 == 0)
+            {
+                // If file not found in trie, send -1 as acknowledgment to the client
+                char send_details_to_client_1[BUF_SIZE];
+                sprintf(send_details_to_client_1, "%d", -1);
+                if (send(nm_sock_for_client, send_details_to_client_1, strlen(send_details_to_client_1), 0) < 0)
+                {
+                    perror("send() error");
+                    exit(1);
+                }
+                return 0;
+            }
+            else
+            {
+                printf("found in trie\n");
+                // File found in trie
+                // Retrieve Storage Server information
+                int ss_client_port_1 = array_of_ss_info[ss_num_1].ss_client_port;
+                int ss_nm_port_1 = array_of_ss_info[ss_num_1].ss_nm_port;
+                char *ss_ip_1 = array_of_ss_info[ss_num_1].ss_ip;
+            }
+        }
+        // File found in the LRU cache
+        else
+        {
+            // Retrieve Storage Server information
+            int port_1 = node_in_cache_1->storage_server_port_for_client;
+            char ss_ip_1[21];
+            strcpy(ss_ip_1, node_in_cache_1->storage_server_ip);
+        }
     }
     else if (strncmp(input, "create_folder", strlen("create_folder")) == 0)
     {
