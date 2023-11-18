@@ -48,13 +48,13 @@ int what_to_do(char *input, int nm_sock_for_client)
                 char send_details_to_client[BUF_SIZE];
                 int port = array_of_ss_info[ss_num].ss_client_port;
                 strcpy(send_details_to_client, array_of_ss_info[ss_num].ss_ip);
-                
+
                 // concatenate ip and port as a string separated by space
                 char port_as_string[100];
                 sprintf(port_as_string, " %d", port);
-                strcat(send_details_to_client,port_as_string);
-                
-                printf("whats sent to client: %s#\n",send_details_to_client);
+                strcat(send_details_to_client, port_as_string);
+
+                printf("whats sent to client: %s#\n", send_details_to_client);
                 if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
                 {
                     perror("send() error");
@@ -79,6 +79,72 @@ int what_to_do(char *input, int nm_sock_for_client)
     }
     else if (strncmp(input, "write", strlen("write")) == 0)
     {
+        // command: write filepath
+        char temp[1024];
+        strcpy(temp, input);
+        char *file_path = strtok(temp, " ");
+        file_path = strtok(NULL, " ");
+
+        // Check if the file is in the LRU cache
+        lru_node *node_in_cache = find_and_return(file_path, head);
+        // File not found in cache
+        if (node_in_cache == NULL)
+        {
+            printf("not in cache\n");
+            // Search in trie
+            int ss_num = search(root, file_path);
+            printf("ss_num: %d\n", ss_num);
+
+            if (ss_num == 0)
+            {
+                // If file not found in trie, send -1 as acknowledgment to the client
+                char send_details_to_client[BUF_SIZE];
+                sprintf(send_details_to_client, "%d", -1);
+                if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
+                {
+                    perror("send() error");
+                    exit(1);
+                }
+                return 0;
+            }
+            else
+            {
+                printf("found in trie\n");
+                // File found in trie, send storage server details to the client
+                char send_details_to_client[BUF_SIZE];
+                int port = array_of_ss_info[ss_num].ss_client_port;
+                strcpy(send_details_to_client, array_of_ss_info[ss_num].ss_ip);
+
+                // Concatenate IP and port as a string separated by space
+                char port_as_string[100];
+                sprintf(port_as_string, " %d", port);
+                strcat(send_details_to_client, port_as_string);
+
+                printf("whats sent to the client: %s#\n", send_details_to_client);
+                if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
+                {
+                    perror("send() error");
+                    exit(1);
+                }
+            }
+        }
+        // File found in the LRU cache
+        else
+        {
+            // Send storage server details to the client
+            char send_details_to_client[BUF_SIZE];
+            int port = node_in_cache->storage_server_port_for_client;
+            char ss_ip[21];
+            strcpy(ss_ip, node_in_cache->storage_server_ip);
+
+            // Concatenate IP and port as a string separated by space
+            sprintf(send_details_to_client, "%s %d", ss_ip, port);
+            if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+        }
     }
 
     else if (strncmp(input, "create_file", strlen("create")) == 0)
