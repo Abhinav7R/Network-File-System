@@ -30,11 +30,19 @@ typedef struct threadargs
     int port;
 }threadargs;
 
+void remove_nextline(char* str)
+{
+    while(str[strlen(str)-1] == '\n')
+    {
+        str[strlen(str)-1] = '\0';
+    }
+}
+
 void* nm_handler(int nm_sockfd, int port, int client_port, char* ip, char* paths_of_all)
 {
     char buffer_nm[1024];
     bzero(buffer_nm, 1024);
-    sprintf(buffer_nm, "IP: %s\nNM_PORT: %d\nCLIENT PORT: %d\n", ip, port, client_port);
+    sprintf(buffer_nm, "IP: %s\nNM_PORT: %d\nCLIENT_PORT: %d\n", ip, port, client_port);
     if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
     {
         perror("[-]Send error");
@@ -118,6 +126,7 @@ void* nm_handler_for_ops(void* arg)
             char* token = strtok(buffer_nm, " ");
             token = strtok(NULL, " ");
             char* file = token;
+            remove_nextline(file);
 
             make_file(file, nm_sockfd);
         }
@@ -126,6 +135,7 @@ void* nm_handler_for_ops(void* arg)
             char* token = strtok(buffer_nm, " ");
             token = strtok(NULL, " ");
             char* file = token;
+            remove_nextline(file);
 
             del_file(file, nm_sockfd);
         }
@@ -134,6 +144,7 @@ void* nm_handler_for_ops(void* arg)
             char* token = strtok(buffer_nm, " ");
             token = strtok(NULL, " ");
             char* file = token;
+            remove_nextline(file);
 
             delete_dir(file, nm_sockfd);
         }
@@ -142,6 +153,7 @@ void* nm_handler_for_ops(void* arg)
             char* token = strtok(buffer_nm, " ");
             token = strtok(NULL, " ");
             char* file = token;
+            remove_nextline(file);
 
             make_dir(file, nm_sockfd);
         }
@@ -214,6 +226,7 @@ void* client_handler(void* arg)
             char* token = strtok(buffer_client, " ");
             token = strtok(NULL, " ");
             char* file = token;
+            remove_nextline(file);
 
             read_file(file, client_sockfd);
         }
@@ -222,6 +235,7 @@ void* client_handler(void* arg)
             char* token = strtok(buffer_client, " ");
             token = strtok(NULL, " ");
             char* file = token;
+            remove_nextline(file);
 
             write_file(file, client_sockfd);
         }
@@ -230,6 +244,7 @@ void* client_handler(void* arg)
             char* token = strtok(buffer_client, " ");
             token = strtok(NULL, " ");
             char* file = token;
+            remove_nextline(file);
             
             retrieve_info(file, client_sockfd);
         }
