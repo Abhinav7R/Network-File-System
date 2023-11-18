@@ -31,8 +31,9 @@ typedef struct threadargs
     int port;
 }threadargs;
 
-void* nm_handler(char* buffer_nm, int nm_sockfd, int port, int client_port, char* ip, char* paths_of_all)
+void* nm_handler(int nm_sockfd, int port, int client_port, char* ip, char* paths_of_all)
 {
+    char buffer_nm[1024];
     bzero(buffer_nm, 1024);
     sprintf(buffer_nm, "IP: %s\nNM_PORT: %d\nCLIENT PORT: %d\n", ip, port, client_port);
     if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
@@ -292,7 +293,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
     //sending storage server info to naming server
-    nm_handler(buffer_nm, socky, nm_port, client_port, ip, paths_of_all);
+    nm_handler(socky, nm_port, client_port, ip, paths_of_all);
 
     pthread_t input[2];
     addr_size = sizeof(server_addr_1);
