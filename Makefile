@@ -10,6 +10,6 @@ client: client.c
 	gcc -o client client.c	
 
 clean:
-	rm -f naming_server	storage_server
+	rm -f naming_server storage_server client
 
 
