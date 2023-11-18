@@ -91,6 +91,7 @@ int main()
             perror("[-]Receive error");
             exit(1);
         }
+        printf("[+]Received from Storage Server:\n%s\n", B);
 
         // Extract IP, Naming Server Port and Client Port from the received B
         char ip[21];
