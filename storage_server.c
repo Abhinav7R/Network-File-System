@@ -1,6 +1,7 @@
 #include "headers.h"
 
 #define PORT 4545
+char* ip = "127.0.0.1";
 
 char* Read = "read";
 char* Write = "write";
@@ -27,6 +28,7 @@ typedef struct threadargs
     int server_sock;
     int sockfd;
     char* buffer;
+    int port;
 }threadargs;
 
 void* nm_handler(char* buffer_nm, int nm_sockfd, int port, int client_port, char* ip, char* paths_of_all)
@@ -67,6 +69,23 @@ void* nm_handler_for_ops(void* arg)
     int server_sock_1 = args_nm->server_sock;
     int nm_sockfd = args_nm->sockfd;
     char* buffer_nm = args_nm->buffer;
+    int nm_port = args_nm->port;
+
+    server_sock_1 = socket(AF_INET, SOCK_STREAM, 0);
+    if(server_sock_1 < 0)
+    {
+        perror("[-]Socket error");
+        exit(1);
+    }
+    memset(&server_addr_1, '\0', sizeof(server_addr_1));
+    server_addr_1.sin_family = AF_INET;
+    server_addr_1.sin_port = htons(nm_port);
+    server_addr_1.sin_addr.s_addr = inet_addr(ip);
+    if(bind(server_sock_1, (struct sockaddr*)&server_addr_1, sizeof(server_addr_1)) < 0)
+    {
+        perror("[-]Bind error");
+        exit(1);
+    }
 
     addr_size = sizeof(server_addr_1);
     nm_sockfd = accept(server_sock_1, (struct sockaddr*)&server_addr_1, &addr_size);
@@ -138,6 +157,23 @@ void* client_handler(void* arg)
     int server_sock_2 = args_client->server_sock;
     int client_sockfd = args_client->sockfd;
     char* buffer_client = args_client->buffer;
+    int client_port = args_client->port;
+
+    server_sock_2 = socket(AF_INET, SOCK_DGRAM, 0);
+    if(server_sock_2 < 0)
+    {
+        perror("[-]Socket error");
+        exit(1);
+    }
+    memset(&server_addr_2, '\0', sizeof(server_addr_2));
+    server_addr_2.sin_family = AF_INET;
+    server_addr_2.sin_port = htons(client_port);
+    server_addr_2.sin_addr.s_addr = inet_addr(ip);
+    if(bind(server_sock_2, (struct sockaddr*)&server_addr_2, sizeof(server_addr_2)) < 0)
+    {
+        perror("[-]Bind error");
+        exit(1);
+    }
 
     addr_size = sizeof(server_addr_2);
     client_sockfd = accept(server_sock_2, (struct sockaddr*)&server_addr_2, &addr_size);
@@ -195,7 +231,6 @@ int main(int argc, char *argv[])
     //     exit(1);
     // }
     
-    char* ip = "127.0.0.1";
     // int nm_port = atoi(argv[2]);
     // int client_port = atoi(argv[3]);
     int nm_port = 4040;
@@ -253,40 +288,6 @@ int main(int argc, char *argv[])
     }
     nm_handler(buffer_nm, socky, nm_port, client_port, ip, paths_of_all);
 
-    //connecting to client
-    // server_sock_2 = socket(AF_INET, SOCK_DGRAM, 0);
-    // if(server_sock_2 < 0)
-    // {
-    //     perror("[-]Socket error");
-    //     exit(1);
-    // }
-    // memset(&server_addr_2, '\0', sizeof(server_addr_2));
-    // server_addr_2.sin_family = AF_INET;
-    // server_addr_2.sin_port = htons(client_port);
-    // server_addr_2.sin_addr.s_addr = inet_addr(ip);
-    // if(bind(server_sock_2, (struct sockaddr*)&server_addr_2, sizeof(server_addr_2)) < 0)
-    // {
-    //     perror("[-]Bind error");
-    //     exit(1);
-    // }
-    
-    //connecting to naming server
-    server_sock_1 = socket(AF_INET, SOCK_STREAM, 0);
-    if(server_sock_1 < 0)
-    {
-        perror("[-]Socket error");
-        exit(1);
-    }
-    memset(&server_addr_1, '\0', sizeof(server_addr_1));
-    server_addr_1.sin_family = AF_INET;
-    server_addr_1.sin_port = htons(nm_port);
-    server_addr_1.sin_addr.s_addr = inet_addr(ip);
-    if(bind(server_sock_1, (struct sockaddr*)&server_addr_1, sizeof(server_addr_1)) < 0)
-    {
-        perror("[-]Bind error");
-        exit(1);
-    }
-
     //separate threads for clients and naming server
     pthread_t input[2];
     addr_size = sizeof(server_addr_1);
@@ -296,6 +297,7 @@ int main(int argc, char *argv[])
     args_nm->server_sock = server_sock_1;
     args_nm->sockfd = nm_sockfd;
     args_nm->buffer = buffer_nm;
+    args_nm->port = nm_port;
     nm_handler_for_ops((void*)args_nm);
     if(pthread_create(&input[0], NULL, nm_handler_for_ops, (void*)args_nm) != 0)
         printf("[-]Thread creation error.\n");
@@ -307,6 +309,7 @@ int main(int argc, char *argv[])
     args_client->server_sock = server_sock_2;
     args_client->sockfd = client_sockfd;
     args_client->buffer = buffer_client;
+    args_client->port = client_port;
     if(pthread_create(&input[1], NULL, client_handler, (void*)args_client) != 0)
         printf("[-]Thread creation error.\n");
 
