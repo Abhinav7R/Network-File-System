@@ -137,16 +137,18 @@ int main()
                 }
                 //receive data from storage server
                 //first receive number of packets as integer
-                int num_packets;
+                char num_packets[BUF_SIZE];
                 if(recv(sock2,&num_packets,sizeof(num_packets),0)<0)
                 {
                     perror("recv() error");
                     exit(1);
                 }
-                
+                printf("num packets %s\n",num_packets);
+                int num_packets_int = atoi(num_packets);
+                printf("num packets %d\n",num_packets_int);
                 bzero(buf2,BUF_SIZE);
                 //recv data from storage server
-                while(num_packets--)
+                while(num_packets_int--)
                 {
                     if(recv(sock2,buf2,BUF_SIZE,0)<0)
                     {

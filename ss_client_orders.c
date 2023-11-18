@@ -17,11 +17,6 @@ void read_file(char* file, int client_sockfd)
         num_packets++;
     bzero(buffer_client, 1024);
     sprintf(buffer_client, "%ld", num_packets);
-    if(fread(buffer_client, 1, 1024, fd) < 0)
-    {
-        perror("[-]File read error");
-        exit(1);
-    }
     if(send(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
     {
         perror("[-]Send error");
@@ -30,6 +25,11 @@ void read_file(char* file, int client_sockfd)
     while(num_packets--)
     {
         bzero(buffer_client, 1024);
+        if(fread(buffer_client, 1, 1024, fd) < 0)
+        {
+            perror("[-]File read error");
+            exit(1);
+        }
         if(send(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
         {
             perror("[-]Send error");
