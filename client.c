@@ -92,7 +92,13 @@ int main()
                 exit(1);
             }
             //check if -1 is received then file doesnt exist and continue
+            if(strcmp(buf,"-1")==0)
+            {
+                printf("File doesnt exist\n");
+                continue;
+            }
 
+            
             char *server_ip = strtok(buf," ");
             char *server_port = strtok(NULL," ");
             printf("ip: %s \tport: %s\n",server_ip,server_port);
@@ -178,6 +184,13 @@ int main()
                     perror("send() error");
                     exit(1);
                 }
+                //receive OK from storage server
+                bzero(buf2,BUF_SIZE);
+                if(recv(sock2,buf2,BUF_SIZE,0)<0)
+                {
+                    perror("recv() error");
+                    exit(1);
+                }
                 //send data to storage server
                 char data[BUF_SIZE];
                 printf("Enter data: \n");
@@ -199,6 +212,12 @@ int main()
                     {
                         break;
                     }
+                    // bzero(buf2,BUF_SIZE);
+                    // if(recv(sock2,buf2,BUF_SIZE,0)<0)
+                    // {
+                    //     perror("recv() error");
+                    //     exit(1);
+                    // }
                 }
             }
             else if(strncmp(input,"retrieve",strlen("retrieve"))==0)
@@ -209,30 +228,27 @@ int main()
                     exit(1);
                 }
                 //receive information from storage server
-                while(1)
+                
+                bzero(buf2,BUF_SIZE);
+                if(recv(sock2,buf2,BUF_SIZE,0)<0)
                 {
-                    bzero(buf2,BUF_SIZE);
-                    if(recv(sock2,buf2,BUF_SIZE,0)<0)
-                    {
-                        perror("recv() error");
-                        exit(1);
-                    }
-                    if(strcmp(buf2,"\n")==0)
-                    {
-                        break;
-                    }
-                    printf("%s",buf2);
+                    perror("recv() error");
+                    exit(1);
                 }
+                printf("%s\n",buf2);
+                
+                
             }
 
             //close connection with storage server
-            close(sock2);
+            // close(sock2);
+            // printf("connection with storage server closed\n");
         }
         else
         {
             printf("waiting for ack from naming server\n");
             bzero(buf,BUF_SIZE);
-            if(strncmp(input,"create_file",strlen("create"))==0)
+            if(strncmp(input,"create_file",strlen("create_file"))==0)
             {
                 //receive ack from naming server
                 if(recv(sock,buf,BUF_SIZE,0)<0)
@@ -245,7 +261,7 @@ int main()
 
                 // printf("%s",buf);
             }
-            else if(strncmp(input,"delete_file",strlen("delete"))==0)
+            else if(strncmp(input,"delete_file",strlen("delete_file"))==0)
             {
                 //receive ack from naming server
                 if(recv(sock,buf,BUF_SIZE,0)<0)
@@ -255,7 +271,7 @@ int main()
                 }
                 // printf("%s",buf);
             }
-            else if(strncmp(input,"copy_file",strlen("copy"))==0)
+            else if(strncmp(input,"copy_file",strlen("copy_file"))==0)
             {
                 //receive ack from naming server
                 if(recv(sock,buf,BUF_SIZE,0)<0)
@@ -265,7 +281,7 @@ int main()
                 }
                 // printf("%s",buf);
             }
-            else if(strncmp(input,"create_folder",strlen("create folder"))==0)
+            else if(strncmp(input,"create_folder",strlen("create_folder"))==0)
             {
                 //receive ack from naming server
                 if(recv(sock,buf,BUF_SIZE,0)<0)
@@ -275,7 +291,7 @@ int main()
                 }
                 // printf("%s",buf);
             }
-            else if(strncmp(input,"delete_folder",strlen("delete folder"))==0)
+            else if(strncmp(input,"delete_folder",strlen("delete_folder"))==0)
             {
                 //receive ack from naming server
                 if(recv(sock,buf,BUF_SIZE,0)<0)
@@ -285,7 +301,7 @@ int main()
                 }
                 // printf("%s",buf);
             }
-            else if(strncmp(input,"copy_folder",strlen("copy folder"))==0)
+            else if(strncmp(input,"copy_folder",strlen("copy_folder"))==0)
             {
                 //receive ack from naming server
                 if(recv(sock,buf,BUF_SIZE,0)<0)

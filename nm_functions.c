@@ -60,6 +60,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                     perror("send() error");
                     exit(1);
                 }
+                return 1;
             }
         }
         else
@@ -147,7 +148,7 @@ int what_to_do(char *input, int nm_sock_for_client)
         }
     }
 
-    else if (strncmp(input, "create_file", strlen("create")) == 0)
+    else if (strncmp(input, "create_file", strlen("create_file")) == 0)
     {
         // if file already exists send ack as -1
         // choose ss number by comparing string by removing file name
@@ -232,6 +233,8 @@ int what_to_do(char *input, int nm_sock_for_client)
                 exit(1);
             }
 
+            printf("Connected to Storage Server\n");
+
             // Send input to Storage Server
             if (send(sock2, input, strlen(input), 0) < 0)
             {
@@ -254,7 +257,7 @@ int what_to_do(char *input, int nm_sock_for_client)
         }
     }
 
-    else if (strncmp(input, "delete_file", strlen("delete")) == 0)
+    else if (strncmp(input, "delete_file", strlen("delete_file")) == 0)
     {
         // search filepath in the trie
         // retireve ss_num and delete from ss_info and receive ack from ss
@@ -331,10 +334,10 @@ int what_to_do(char *input, int nm_sock_for_client)
             free(deleted_node);
         }
     }
-    else if (strncmp(input, "copy_file", strlen("copy")) == 0)
+    else if (strncmp(input, "copy_file", strlen("copy_file")) == 0)
     {
     }
-    else if (strncmp(input, "create_folder", strlen("create folder")) == 0)
+    else if (strncmp(input, "create_folder", strlen("create_folder")) == 0)
     {
         // command: create_folder folderpath
         char temp[1024];
@@ -429,7 +432,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             close(sock2);
         }
     }
-    else if (strncmp(input, "delete_folder", strlen("delete folder")) == 0)
+    else if (strncmp(input, "delete_folder", strlen("delete_folder")) == 0)
     {
         // command: delete_folder folderpath
         char temp[1024];
@@ -499,7 +502,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             free(deleted_node);
         }
     }
-    else if (strncmp(input, "copy_folder", strlen("copy folder")) == 0)
+    else if (strncmp(input, "copy_folder", strlen("copy_folder")) == 0)
     {
     }
     else

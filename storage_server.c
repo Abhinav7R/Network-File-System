@@ -215,12 +215,14 @@ void* client_handler(void* arg)
     
     while(1)
     {
+        //input from client
         bzero(buffer_client, 1024);
         if(recv(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
         {
             perror("[-]Receive error");
             exit(1);
         }
+        // printf("input from client: %s\n", buffer_client);
         if(strncmp(buffer_client, Read, strlen(Read)) == 0)
         {
             char* token = strtok(buffer_client, " ");
@@ -230,13 +232,19 @@ void* client_handler(void* arg)
 
             read_file(file, client_sockfd);
         }
-        else if(strncmp(buffer_client, Write, sizeof(Write)) == 0)
+        else if(strncmp(buffer_client, Write, strlen(Write)) == 0)
         {
+            //send ready to receive data for writing
+            if(send(client_sockfd, "OK", sizeof("OK"), 0) < 0)
+            {
+                perror("[-]Send error");
+                exit(1);
+            }
             char* token = strtok(buffer_client, " ");
             token = strtok(NULL, " ");
             char* file = token;
             remove_nextline(file);
-
+            printf("file %s\n", file);
             write_file(file, client_sockfd);
         }
         else if(strncmp(buffer_client, Retrieve, strlen(Retrieve)) == 0)

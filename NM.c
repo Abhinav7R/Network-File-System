@@ -210,15 +210,18 @@ int main()
         exit(1);
     }
 
-    char input[BUF_SIZE];
-    if(recv(client_sock,input,BUF_SIZE,0)<0)
+    while(1)
     {
-        perror("recv() error");
-        exit(1);
-    }
+        char input[BUF_SIZE];
+        if(recv(client_sock,input,BUF_SIZE,0)<0)
+        {
+            perror("recv() error");
+            exit(1);
+        }
 
-    printf("Received from client: %s\n",buf);
-    what_to_do(input,client_sock);
+        printf("Received from client: %s\n",buf);
+        what_to_do(input,client_sock);
+    }
     
     // Close the Naming Server socket for storage server
     close(server_sock);

@@ -2,21 +2,50 @@
 
 void make_file(char* file, int nm_sockfd)
 {
+    printf("create file %s\n", file);
     char buffer_nm[1024];
     bzero(buffer_nm, 1024);
-    int fd = open(file, O_CREAT, 0666);
-    sprintf(buffer_nm, "%d", fd);
-    if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+    // int fd = open(file, O_CREAT | O_RDWR, 0777);
+    FILE* fd = fopen(file, "w+");
+    if(fd != NULL)
     {
-        perror("[-]Send error");
-        exit(1);
+        bzero(buffer_nm, 1024);
+        strcpy(buffer_nm, "1");
+        if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+        {
+            perror("[-]Send error");
+            exit(1);
+        }
     }
-    if(fd < 0)
+    else
     {
+        bzero(buffer_nm, 1024);
+        strcpy(buffer_nm, "-1");
+        if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+        {
+            perror("[-]Send error");
+            exit(1);
+        }
         perror("[-]File create error");
-        exit(1);
+        //error handling to be done
+        //dont exit program but just return
+        // exit(1);
+        return;
     }
-    close(fd);
+    // sprintf(buffer_nm, "%d", fd);
+    // if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+    // {
+    //     perror("[-]Send error");
+    //     exit(1);
+    // }
+    // if(fd < 0)
+    // {
+    //     perror("[-]File create error");
+    //     //error handling to be done
+    //     //dont exit program but just return
+    //     exit(1);
+    // }
+    fclose(fd);
 }
 
 void del_file(char* file, int nm_sockfd)

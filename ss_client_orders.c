@@ -54,7 +54,7 @@ void read_file(char* file, int client_sockfd)
 void write_file(char* file, int client_sockfd)
 {
     char buffer_client[1024];
-    FILE* fd = fopen(file, "wb");
+    FILE* fd = fopen(file, "a");
     if(fd == NULL)
     {
         perror("[-]File open error");
@@ -68,10 +68,20 @@ void write_file(char* file, int client_sockfd)
             perror("[-]Receive error");
             exit(1);
         }
+        
+        // printf("%s\n", buffer_client);
         if(strcmp(buffer_client, "\n") == 0)
             break;
+            
         fprintf(fd, "%s", buffer_client);
-        fprintf(fd, "\n");
+
+        // bzero(buffer_client, 1024);
+        // strcpy(buffer_client, "OK");
+        // if(send(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
+        // {
+        //     perror("[-]Send error");
+        //     exit(1);
+        // }
     }
     fclose(fd);
 }
