@@ -31,6 +31,15 @@ typedef struct threadargs
     int ss_port;
 }threadargs;
 
+typedef struct clientargs* clargs;
+typedef struct clientargs
+{
+    socklen_t addr_size;
+    struct sockaddr_in server_addr;
+    int server_sock;
+    int sockfd;
+}clientargs;
+
 void remove_nextline(char* str)
 {
     while(str[strlen(str)-1] == '\n')
@@ -206,39 +215,14 @@ void* nm_handler_for_ops(void* arg)
     pthread_exit(NULL);
 }
 
-void* client_handler(void* arg)
+void* client_handler_for_ops(void* arg)
 {
-    args args_client = (args)arg;
-    socklen_t addr_size = args_client->addr_size;
-    struct sockaddr_in server_addr_2 = args_client->server_addr;
-    int server_sock_2 = args_client->server_sock;
-    int client_sockfd = args_client->sockfd;
+    clargs args = (clargs)arg;
+    socklen_t addr_size = args->addr_size;
+    struct sockaddr_in server_addr_2 = args->server_addr;
+    int server_sock_2 = args->server_sock;
+    int client_sockfd = args->sockfd;
     char buffer_client[1024];
-    int client_port = args_client->port;
-
-    server_sock_2 = socket(AF_INET, SOCK_STREAM, 0);
-    if(server_sock_2 < 0)
-    {
-        perror("[-]Socket error");
-        exit(1);
-    }
-    memset(&server_addr_2, '\0', sizeof(server_addr_2));
-    server_addr_2.sin_family = AF_INET;
-    server_addr_2.sin_port = htons(client_port);
-    server_addr_2.sin_addr.s_addr = inet_addr(ip);
-    if(bind(server_sock_2, (struct sockaddr*)&server_addr_2, sizeof(server_addr_2)) < 0)
-    {
-        perror("[-]Bind error");
-        exit(1);
-    }
-    printf("[+]Bind to port for clients\n");
-    int l = listen(server_sock_2, 100);
-    if(l < 0)
-    {
-        perror("[-]Listen error Client");
-        exit(1);
-    }
-
     
     while(1)
     {
@@ -294,6 +278,58 @@ void* client_handler(void* arg)
         }
         close(client_sockfd);
     }
+}
+
+void* client_handler(void* arg)
+{
+    args args_client = (args)arg;
+    socklen_t addr_size = args_client->addr_size;
+    struct sockaddr_in server_addr_2 = args_client->server_addr;
+    int server_sock_2 = args_client->server_sock;
+    int client_sockfd = args_client->sockfd;
+    char buffer_client[1024];
+    int client_port = args_client->port;
+
+    server_sock_2 = socket(AF_INET, SOCK_STREAM, 0);
+    if(server_sock_2 < 0)
+    {
+        perror("[-]Socket error");
+        exit(1);
+    }
+    memset(&server_addr_2, '\0', sizeof(server_addr_2));
+    server_addr_2.sin_family = AF_INET;
+    server_addr_2.sin_port = htons(client_port);
+    server_addr_2.sin_addr.s_addr = inet_addr(ip);
+    if(bind(server_sock_2, (struct sockaddr*)&server_addr_2, sizeof(server_addr_2)) < 0)
+    {
+        perror("[-]Bind error");
+        exit(1);
+    }
+    printf("[+]Bind to port for clients\n");
+    int l = listen(server_sock_2, 100);
+    if(l < 0)
+    {
+        perror("[-]Listen error Client");
+        exit(1);
+    }
+
+    pthread_t client_thread[100];
+    clargs* thclargs = (clargs*)calloc(sizeof(clargs), 100);
+    for(int i=0; i<100; i++)
+    {
+        thclargs[i] = (clargs)malloc(sizeof(clientargs));
+        thclargs[i]->addr_size = addr_size;
+        thclargs[i]->server_addr = server_addr_2;
+        thclargs[i]->server_sock = server_sock_2;
+        thclargs[i]->sockfd = client_sockfd;
+        pthread_create(&client_thread[i], NULL, client_handler_for_ops, (void*)thclargs[i]);
+    }
+
+    for(int i=0; i<100; i++)
+    {
+        pthread_join(client_thread[i], NULL);
+    }
+    
     close(server_sock_2);
     pthread_exit(NULL);
 }
