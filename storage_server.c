@@ -159,11 +159,27 @@ void* nm_handler_for_ops(void* arg)
         }
         else if(strncmp(copy_file, buffer_nm, strlen(copy_file)) == 0)
         {
+            char* token = strtok(buffer_nm, " ");
+            token = strtok(NULL, " ");
+            char* source = token;
+            remove_nextline(source);
+            token = strok(NULL, " ");
+            char* dest = token;
+            remove_nextline(dest);
 
+            copyFile(source, dest, nm_sockfd);
         }
         else if(strncmp(copy_folder, buffer_nm, strlen(copy_folder)) == 0)
         {
+            char* token = strtok(buffer_nm, " ");
+            token = strtok(NULL, " ");
+            char* source = token;
+            remove_nextline(source);
+            token = strok(NULL, " ");
+            char* dest = token;
+            remove_nextline(dest);
 
+            copyDir(source, dest, nm_sockfd);
         }
     }
     close(nm_sockfd);
