@@ -800,6 +800,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 perror("recv() error");
                 exit(1);
             }
+            close(nm_sock_for_client);
         }
         printf("Invalid action\n");
         return 0;
