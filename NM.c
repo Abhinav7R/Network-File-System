@@ -133,46 +133,51 @@ void* Handle_SS(void* arguments)
 
 void* Handle_Client(void* argument_for_client)
 {
-    arguments_for_individual_client_thread* args=(arguments_for_individual_client_thread*)argument_for_client;
-    int client_id=args->client_id;
-    int nm_sock_for_client=args->client_sock;
-    struct sockaddr_in nm_addr_for_client=args->client_addr;
-    socklen_t addr_size_for_client;
-    char buf[BUF_SIZE];
-
-    //send connection successful to client
-    addr_size_for_client = sizeof(nm_addr_for_client);
-    int client_sock = accept(nm_sock_for_client, (struct sockaddr*)&nm_addr_for_client, &addr_size_for_client);
-    if(client_sock < 0)
-    {
-        perror("[-]Accept error");
-        exit(1);
-    }
-
-    printf("[+]Client %d connected\n",client_id);
-
-    bzero(buf,BUF_SIZE);
-    strcpy(buf,"Connection successful");
-    if(send(client_sock,buf,strlen(buf),0)<0)
-    {
-        perror("send() error");
-        exit(1);
-    }
-
     while(1)
     {
-        char input[BUF_SIZE];
-        bzero(input,BUF_SIZE);
-        if(recv(client_sock,input,BUF_SIZE,0)<0)
+        arguments_for_individual_client_thread* args=(arguments_for_individual_client_thread*)argument_for_client;
+        int client_id=args->client_id;
+        int nm_sock_for_client=args->client_sock;
+        struct sockaddr_in nm_addr_for_client=args->client_addr;
+        socklen_t addr_size_for_client;
+        char buf[BUF_SIZE];
+
+        //send connection successful to client
+        addr_size_for_client = sizeof(nm_addr_for_client);
+        int client_sock = accept(nm_sock_for_client, (struct sockaddr*)&nm_addr_for_client, &addr_size_for_client);
+        if(client_sock < 0)
         {
-            perror("recv() error");
+            perror("[-]Accept error");
             exit(1);
         }
 
-        // printf("Received from client: %s\n",buf);
-        what_to_do(input,client_sock);
-    }
+        printf("[+]Client %d connected\n",client_id);
 
+        bzero(buf,BUF_SIZE);
+        strcpy(buf,"Connection successful");
+        if(send(client_sock,buf,strlen(buf),0)<0)
+        {
+            perror("send() error");
+            exit(1);
+        }
+
+        while(1)
+        {
+            char input[BUF_SIZE];
+            bzero(input,BUF_SIZE);
+            if(recv(client_sock,input,BUF_SIZE,0)<0)
+            {
+                perror("recv() error");
+                exit(1);
+            }
+
+            // printf("Received from client: %s\n",buf);
+            int check_exit=what_to_do(input,client_sock);
+            if(check_exit==0)
+                break;
+        }
+        printf("Client %d disconnected\n",client_id);
+    }
 }
 
 void* Main_Handle_Client(void* argument_for_client)

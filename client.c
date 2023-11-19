@@ -1,5 +1,29 @@
 #include "headers.h"
 
+int check_input(char* input)
+{
+    int flag=0;
+    if(strncmp(input,"read",strlen("read"))==0)
+        flag=1;
+    if(strncmp(input,"write",strlen("write"))==0)
+        flag=1;
+    if(strncmp(input,"retrieve",strlen("retrieve"))==0)
+        flag=1;
+    if(strncmp(input,"create_file",strlen("create_file"))==0)
+        flag=1;
+    if(strncmp(input,"delete_file",strlen("delete_file"))==0)
+        flag=1;
+    if(strncmp(input,"copy_file",strlen("copy_file"))==0)
+        flag=1;
+    if(strncmp(input,"create_folder",strlen("create_folder"))==0)
+        flag=1;
+    if(strncmp(input,"delete_folder",strlen("delete_folder"))==0)
+        flag=1;
+    if(strncmp(input,"copy_folder",strlen("copy_folder"))==0)
+        flag=1;
+    
+    return flag;
+}
 
 //client program
 int main()
@@ -69,8 +93,16 @@ int main()
         printf("Enter action: \n");
         fgets(input,100,stdin);
 
-        if(strcmp(input,"exit")==0)
+        if(strncmp(input,"exit",strlen("exit"))==0)
         {
+            //send to naming server
+            if(send(sock,input,strlen(input),0)<0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+            //diconnect from naming server
+            close(sock);
             break;
         }
 
@@ -81,11 +113,14 @@ int main()
         // printf("input: %s\n",input);
         // printf("strlen: %ld\n", strlen(input));
 
-        if(send(sock,input,strlen(input),0)<0)
+        if(check_input(input)!=0)
         {
-            perror("send() error");
-            exit(1);
-        }
+            if(send(sock,input,strlen(input),0)<0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+        }       
 
         //if input is read write or retrieve information then receive port and ip of storage server
         //connect to storage server and send action to storage server
@@ -254,7 +289,7 @@ int main()
         }
         else
         {
-            printf("waiting for ack from naming server\n");
+            // printf("waiting for ack from naming server\n");
             bzero(buf,BUF_SIZE);
             if(strncmp(input,"create_file",strlen("create_file"))==0)
             {
@@ -321,11 +356,11 @@ int main()
             }
             else
             {
-                if(recv(sock,buf,BUF_SIZE,0)<0)
-                {
-                    perror("recv() error");
-                    exit(1);
-                }
+                // if(recv(sock,buf,BUF_SIZE,0)<0)
+                // {
+                //     perror("recv() error");
+                //     exit(1);
+                // }
                 printf("Invalid action\n");
             }
         
