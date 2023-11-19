@@ -395,176 +395,176 @@ int what_to_do(char *input, int nm_sock_for_client)
     }
     else if (strncmp(input, "copy_file", strlen("copy_file")) == 0)
     {
-    //     // command: copy_file old_filepath new_folderpath
-    //     char temp[1024];
-    //     strcpy(temp, input);
+        // command: copy_file old_filepath new_folderpath
+        char temp[1024];
+        strcpy(temp, input);
 
-    //     char *old_filepath;
-    //     char *new_folderpath;
+        char *old_filepath;
+        char *new_folderpath;
 
-    //     // Tokenize the input to extract old_filepath and new_folderpath
-    //     old_filepath = strtok(temp, " ");
-    //     old_filepath = strtok(NULL, " ");
-    //     new_folderpath = strtok(NULL, " ");
+        // Tokenize the input to extract old_filepath and new_folderpath
+        old_filepath = strtok(temp, " ");
+        old_filepath = strtok(NULL, " ");
+        new_folderpath = strtok(NULL, " ");
 
-    //     // Check if the file is in the LRU cache
-    //     lru_node *node_in_cache_1 = find_and_return(old_filepath, head);
-    //     lru_node *node_in_cache_2 = find_and_return(new_folderpath, head);
-    //     int ss_num_1;
-    //     int ss_num_2;
-    //     int ss_client_port_1, ss_client_port_2;
-    //     int ss_nm_port_1, ss_nm_port_2;
-    //     char *ss_ip_1;
-    //     char *ss_ip_2;
-    //     int port_1, port_2;
-    //     char ss_ip_1[21];
-    //     char ss_ip_2[21];
+        // Check if the file is in the LRU cache
+        lru_node *node_in_cache_1 = find_and_return(old_filepath, head);
+        lru_node *node_in_cache_2 = find_and_return(new_folderpath, head);
+        int ss_num_1;
+        int ss_num_2;
+        int ss_client_port_1, ss_client_port_2;
+        int ss_nm_port_1, ss_nm_port_2;
+        char *ss_ip_1;
+        char *ss_ip_2;
+        int port_1, port_2;
+        char ss_ip_3[21];
+        char ss_ip_4[21];
 
-    //     if (node_in_cache_1 == NULL)
-    //     {
-    //         printf("not in cache\n");
-    //         // Search in trie
-    //         ss_num_1 = search(root, old_filepath);
-    //         printf("ss_num_1: %d\n", ss_num_1);
+        if (node_in_cache_1 == NULL)
+        {
+            printf("not in cache\n");
+            // Search in trie
+            ss_num_1 = search(root, old_filepath);
+            printf("ss_num_1: %d\n", ss_num_1);
 
-    //         if (ss_num_1 == 0)
-    //         {
-    //             // If file not found in trie, send -1 as acknowledgment to the client
-    //             char send_details_to_client[BUF_SIZE];
-    //             sprintf(send_details_to_client, "%d", -1);
-    //             if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
-    //             {
-    //                 perror("send() error");
-    //                 exit(1);
-    //             }
-    //             return 0;
-    //         }
+            if (ss_num_1 == 0)
+            {
+                // If file not found in trie, send -1 as acknowledgment to the client
+                char send_details_to_client[BUF_SIZE];
+                sprintf(send_details_to_client, "%d", -1);
+                if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
+                {
+                    perror("send() error");
+                    exit(1);
+                }
+                return 0;
+            }
 
-    //         else
-    //         {
-    //             printf("found in trie\n");
-    //             // File found in trie
-    //             // Retrieve Storage Server information
-    //             ss_client_port_1 = array_of_ss_info[ss_num_1].ss_client_port;
-    //             ss_nm_port_1 = array_of_ss_info[ss_num_1].ss_nm_port;
-    //             ss_ip_1 = array_of_ss_info[ss_num_1].ss_ip;
-    //         }
-    //     }
-    //     // File found in the LRU cache
-    //     else
-    //     {
-    //         port_1 = node_in_cache_1->storage_server_port_for_client;
-    //         strcpy(ss_ip_1, node_in_cache_1->storage_server_ip);
-    //     }
+            else
+            {
+                printf("found in trie\n");
+                // File found in trie
+                // Retrieve Storage Server information
+                ss_client_port_1 = array_of_ss_info[ss_num_1].ss_client_port;
+                ss_nm_port_1 = array_of_ss_info[ss_num_1].ss_nm_port;
+                ss_ip_1 = array_of_ss_info[ss_num_1].ss_ip;
+            }
+        }
+        // File found in the LRU cache
+        else
+        {
+            port_1 = node_in_cache_1->storage_server_port_for_client;
+            strcpy(ss_ip_3, node_in_cache_1->storage_server_ip);
+        }
 
-    //     if (node_in_cache_2 == NULL)
-    //     {
-    //         printf("not in cache\n");
-    //         // Search in trie
-    //         ss_num_2 = search(root, new_folderpath);
-    //         printf("ss_num_2: %d\n", ss_num_2);
+        if (node_in_cache_2 == NULL)
+        {
+            printf("not in cache\n");
+            // Search in trie
+            ss_num_2 = search(root, new_folderpath);
+            printf("ss_num_2: %d\n", ss_num_2);
 
-    //         if (ss_num_2 == 0)
-    //         {
-    //             // If file not found in trie, send -1 as acknowledgment to the client
-    //             char send_details_to_client_1[BUF_SIZE];
-    //             sprintf(send_details_to_client_1, "%d", -1);
-    //             if (send(nm_sock_for_client, send_details_to_client_1, strlen(send_details_to_client_1), 0) < 0)
-    //             {
-    //                 perror("send() error");
-    //                 exit(1);
-    //             }
-    //             return 0;
-    //         }
-    //         else
-    //         {
-    //             printf("found in trie\n");
-    //             // File found in trie
-    //             //  Retrieve Storage Server information
-    //             ss_client_port_2 = array_of_ss_info[ss_num_2].ss_client_port;
-    //             ss_nm_port_2 = array_of_ss_info[ss_num_2].ss_nm_port;
-    //             ss_ip_2 = array_of_ss_info[ss_num_2].ss_ip;
-    //         }
-    //     }
-    //     // File found in the LRU cache
-    //     else
-    //     {
-    //         // Retrieve Storage Server information
-    //         port_2 = node_in_cache_2->storage_server_port_for_client;
-    //         strcpy(ss_ip_2, node_in_cache_2->storage_server_ip);
-    //     }
+            if (ss_num_2 == 0)
+            {
+                // If file not found in trie, send -1 as acknowledgment to the client
+                char send_details_to_client_1[BUF_SIZE];
+                sprintf(send_details_to_client_1, "%d", -1);
+                if (send(nm_sock_for_client, send_details_to_client_1, strlen(send_details_to_client_1), 0) < 0)
+                {
+                    perror("send() error");
+                    exit(1);
+                }
+                return 0;
+            }
+            else
+            {
+                printf("found in trie\n");
+                // File found in trie
+                //  Retrieve Storage Server information
+                ss_client_port_2 = array_of_ss_info[ss_num_2].ss_client_port;
+                ss_nm_port_2 = array_of_ss_info[ss_num_2].ss_nm_port;
+                ss_ip_2 = array_of_ss_info[ss_num_2].ss_ip;
+            }
+        }
+        // File found in the LRU cache
+        else
+        {
+            // Retrieve Storage Server information
+            port_2 = node_in_cache_2->storage_server_port_for_client;
+            strcpy(ss_ip_4, node_in_cache_2->storage_server_ip);
+        }
 
-    //     // Connect SS1 to NM and send details of SS2
-    //     int sock_1;
-    //     struct sockaddr_in serv_addr_1;
-    //     char buffer_1[1024];
+        // Connect SS1 to NM and send details of SS2
+        int sock_1;
+        struct sockaddr_in serv_addr_1;
+        char buffer_1[1024];
 
-    //     sock_1 = socket(AF_INET, SOCK_STREAM, 0);
-    //     if (sock_1 == -1)
-    //     {
-    //         perror("socket() error");
-    //         exit(1);
-    //     }
+        sock_1 = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock_1 == -1)
+        {
+            perror("socket() error");
+            exit(1);
+        }
 
-    //     memset(&serv_addr_1, 0, sizeof(serv_addr_1));
-    //     serv_addr_1.sin_family = AF_INET;
-    //     serv_addr_1.sin_addr.s_addr = inet_addr(ss_ip_1);
-    //     serv_addr_1.sin_port = htons(ss_nm_port_1);
+        memset(&serv_addr_1, 0, sizeof(serv_addr_1));
+        serv_addr_1.sin_family = AF_INET;
+        serv_addr_1.sin_addr.s_addr = inet_addr(ss_ip_1);
+        serv_addr_1.sin_port = htons(ss_nm_port_1);
 
-    //     if (connect(sock_1, (struct sockaddr *)&serv_addr_1, sizeof(serv_addr_1)) == -1)
-    //     {
-    //         perror("connect() error");
-    //         exit(1);
-    //     }
+        if (connect(sock_1, (struct sockaddr *)&serv_addr_1, sizeof(serv_addr_1)) == -1)
+        {
+            perror("connect() error");
+            exit(1);
+        }
 
-    //     char send_details_to_ss1[BUF_SIZE];
-    //     sprintf(send_details_to_ss1, "%s %s %d %d 1", input, ss_ip_2, ss_client_port_2, ss_nm_port_2);
+        char send_details_to_ss1[BUF_SIZE];
+        sprintf(send_details_to_ss1, "%s %s %d %d 1", input, ss_ip_2, ss_client_port_2, ss_nm_port_2);
 
-    //     if (send(sock_1, send_details_to_ss1, strlen(send_details_to_ss1), 0) < 0)
-    //     {
-    //         perror("send() error");
-    //         exit(1);
-    //     }
+        if (send(sock_1, send_details_to_ss1, strlen(send_details_to_ss1), 0) < 0)
+        {
+            perror("send() error");
+            exit(1);
+        }
 
-    //     // Receive Acknowledgement from SS (waiting for Agrim)
+        // Receive Acknowledgement from SS (waiting for Agrim)
 
-    //     close(sock_1);
+        close(sock_1);
 
-    //     // Connect SS2 to NM and send details of SS1
-    //     int sock_2;
-    //     struct sockaddr_in serv_addr_2;
-    //     char buffer_2[1024];
+        // Connect SS2 to NM and send details of SS1
+        int sock_2;
+        struct sockaddr_in serv_addr_2;
+        char buffer_2[1024];
 
-    //     sock_2 = socket(AF_INET, SOCK_STREAM, 0);
-    //     if (sock_2 == -1)
-    //     {
-    //         perror("socket() error");
-    //         exit(1);
-    //     }
+        sock_2 = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock_2 == -1)
+        {
+            perror("socket() error");
+            exit(1);
+        }
 
-    //     memset(&serv_addr_2, 0, sizeof(serv_addr_2));
-    //     serv_addr_2.sin_family = AF_INET;
-    //     serv_addr_2.sin_addr.s_addr = inet_addr(ss_ip_2);
-    //     serv_addr_2.sin_port = htons(ss_nm_port_2);
+        memset(&serv_addr_2, 0, sizeof(serv_addr_2));
+        serv_addr_2.sin_family = AF_INET;
+        serv_addr_2.sin_addr.s_addr = inet_addr(ss_ip_2);
+        serv_addr_2.sin_port = htons(ss_nm_port_2);
 
-    //     if (connect(sock_2, (struct sockaddr *)&serv_addr_2, sizeof(serv_addr_2)) == -1)
-    //     {
-    //         perror("connect() error");
-    //         exit(1);
-    //     }
+        if (connect(sock_2, (struct sockaddr *)&serv_addr_2, sizeof(serv_addr_2)) == -1)
+        {
+            perror("connect() error");
+            exit(1);
+        }
 
-    //     char send_details_to_ss2[BUF_SIZE];
-    //     sprintf(send_details_to_ss2, "%s %s %d %d 1", input, ss_ip_1, ss_client_port_1, ss_nm_port_1);
+        char send_details_to_ss2[BUF_SIZE];
+        sprintf(send_details_to_ss2, "%s %s %d %d 1", input, ss_ip_1, ss_client_port_1, ss_nm_port_1);
 
-    //     if (send(sock_2, send_details_to_ss2, strlen(send_details_to_ss2), 0) < 0)
-    //     {
-    //         perror("send() error");
-    //         exit(1);
-    //     }
+        if (send(sock_2, send_details_to_ss2, strlen(send_details_to_ss2), 0) < 0)
+        {
+            perror("send() error");
+            exit(1);
+        }
 
-    //     // Receive Acknowledgement from SS (waiting for Agrim)
+        // Receive Acknowledgement from SS (waiting for Agrim)
 
-    //     close(sock_2);
+        close(sock_2);
     }
 
     else if (strncmp(input, "create_folder", strlen("create_folder")) == 0)
@@ -792,6 +792,15 @@ int what_to_do(char *input, int nm_sock_for_client)
     }
     else
     {
+        if (strncmp(input, "exit", strlen("exit")) == 0)
+        {
+            char buffer_ack[BUF_SIZE];
+            if (recv(nm_sock_for_client, buffer_ack, sizeof(buffer_ack), 0) < 0)
+            {
+                perror("recv() error");
+                exit(1);
+            }
+        }
         printf("Invalid action\n");
         return 0;
     }
