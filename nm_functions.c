@@ -242,16 +242,43 @@ int what_to_do(char *input, int nm_sock_for_client)
                 exit(1);
             }
 
-            // Receive Acknowledgement from SS (waiting for Agrim)
-            // 1 for Success, -1 for Failure
-            // send the same to client
+            // Receive Ack from Storage Server
+            int ack;
+            char buffer_ack[BUF_SIZE];
+            if (recv(sock2, buffer_ack, sizeof(buffer_ack), 0) < 0)
+            {
+                perror("recv() error");
+                exit(1);
+            }
 
-            // Insert into trie
-            insert(root, file_path, ss_num);
+            // Convert received acknowledgment to an integer
+            sscanf(buffer_ack, "%d", &ack);
 
-            // Insert into LRU
-            lru_node *new_lru_node = make_lru_node(file_path, ss_num, ss_client_port, ss_ip);
-            insert_at_front(new_lru_node, head);
+            close(sock2);
+
+            // Send the same acknowledgment to the client
+            char send_details_to_client[BUF_SIZE];
+            sprintf(send_details_to_client, "%d", ack);
+            if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+
+            if (ack >= 0)
+            {
+                // Insert into trie
+                insert(root, file_path, ss_num);
+
+                // Insert into LRU
+                lru_node *new_lru_node = make_lru_node(file_path, ss_num, ss_client_port, ss_ip);
+                insert_at_front(new_lru_node, head);
+            }
+            else
+            {
+                perror("[-]File delete error");
+                exit(1);
+            }
 
             // Send Ack to client that opeartion is successfull
 
@@ -328,18 +355,47 @@ int what_to_do(char *input, int nm_sock_for_client)
             }
 
             // Receive Ack from Storage Server
+            int ack;
+            char buffer_ack[BUF_SIZE];
+            if (recv(sock2, buffer_ack, sizeof(buffer_ack), 0) < 0)
+            {
+                perror("recv() error");
+                exit(1);
+            }
+
+            // Convert received acknowledgment to an integer
+            sscanf(buffer_ack, "%d", &ack);
 
             close(sock2);
-            // Delete the file path from the trie
-            delete_node(root, file_path);
-            // Search and delete from the LRU cache
-            lru_node *deleted_node = delete_lru_node(file_path, head);
-            free(deleted_node);
+
+            // Send the same acknowledgment to the client
+            char send_details_to_client[BUF_SIZE];
+            sprintf(send_details_to_client, "%d", ack);
+            if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+
+            if (ack >= 0)
+            {
+                // Acknowledgment received successfully: delete the file path from the trie
+                delete_node(root, file_path);
+
+                // Search and delete from the LRU cache
+                lru_node *deleted_node = delete_lru_node(file_path, head);
+                free(deleted_node);
+            }
+            else
+            {
+                perror("[-]File delete error");
+                exit(1);
+            }
         }
     }
     else if (strncmp(input, "copy_file", strlen("copy_file")) == 0)
     {
-        command: copy_file old_filepath new_folderpath
+        // command: copy_file old_filepath new_folderpath
         char temp[1024];
         strcpy(temp, input);
 
@@ -352,16 +408,26 @@ int what_to_do(char *input, int nm_sock_for_client)
         new_folderpath = strtok(NULL, " ");
 
         // Check if the file is in the LRU cache
-        lru_node *node_in_cache = find_and_return(old_filepath, head);
-        // File not found in cache
-        if (node_in_cache == NULL)
+        lru_node *node_in_cache_1 = find_and_return(old_filepath, head);
+        lru_node *node_in_cache_2 = find_and_return(new_folderpath, head);
+        int ss_num_1;
+        int ss_num_2;
+        int ss_client_port_1, ss_client_port_2;
+        int ss_nm_port_1, ss_nm_port_2;
+        char *ss_ip_1;
+        char *ss_ip_2;
+        int port_1, port_2;
+        char ss_ip_1[21];
+        char ss_ip_2[21];
+
+        if (node_in_cache_1 == NULL)
         {
             printf("not in cache\n");
             // Search in trie
-            int ss_num = search(root, old_filepath);
-            printf("ss_num: %d\n");
+            ss_num_1 = search(root, old_filepath);
+            printf("ss_num_1: %d\n", ss_num_1);
 
-            if (ss_num == 0)
+            if (ss_num_1 == 0)
             {
                 // If file not found in trie, send -1 as acknowledgment to the client
                 char send_details_to_client[BUF_SIZE];
@@ -373,34 +439,32 @@ int what_to_do(char *input, int nm_sock_for_client)
                 }
                 return 0;
             }
+
             else
             {
                 printf("found in trie\n");
                 // File found in trie
                 // Retrieve Storage Server information
-                int ss_client_port = array_of_ss_info[ss_num].ss_client_port;
-                int ss_nm_port = array_of_ss_info[ss_num].ss_nm_port;
-                char *ss_ip = array_of_ss_info[ss_num].ss_ip;
+                ss_client_port_1 = array_of_ss_info[ss_num_1].ss_client_port;
+                ss_nm_port_1 = array_of_ss_info[ss_num_1].ss_nm_port;
+                ss_ip_1 = array_of_ss_info[ss_num_1].ss_ip;
             }
         }
         // File found in the LRU cache
         else
         {
-            // Retrieve Storage Server information
-            int port = node_in_cache->storage_server_port_for_client;
-            char ss_ip[21];
-            strcpy(ss_ip, node_in_cache->storage_server_ip);
+            port_1 = node_in_cache_1->storage_server_port_for_client;
+            strcpy(ss_ip_1, node_in_cache_1->storage_server_ip);
         }
 
-        lru_node *node_in_cache_1 = find_and_return(new_folderpath, head);
-        if (node_in_cache_1 == NULL)
+        if (node_in_cache_2 == NULL)
         {
             printf("not in cache\n");
             // Search in trie
-            int ss_num_1 = search(root, new_folderpath);
-            printf("ss_num_1: %d\n");
+            ss_num_2 = search(root, new_folderpath);
+            printf("ss_num_2: %d\n", ss_num_2);
 
-            if (ss_num_1 == 0)
+            if (ss_num_2 == 0)
             {
                 // If file not found in trie, send -1 as acknowledgment to the client
                 char send_details_to_client_1[BUF_SIZE];
@@ -416,21 +480,93 @@ int what_to_do(char *input, int nm_sock_for_client)
             {
                 printf("found in trie\n");
                 // File found in trie
-                // Retrieve Storage Server information
-                int ss_client_port_1 = array_of_ss_info[ss_num_1].ss_client_port;
-                int ss_nm_port_1 = array_of_ss_info[ss_num_1].ss_nm_port;
-                char *ss_ip_1 = array_of_ss_info[ss_num_1].ss_ip;
+                //  Retrieve Storage Server information
+                ss_client_port_2 = array_of_ss_info[ss_num_2].ss_client_port;
+                ss_nm_port_2 = array_of_ss_info[ss_num_2].ss_nm_port;
+                ss_ip_2 = array_of_ss_info[ss_num_2].ss_ip;
             }
         }
         // File found in the LRU cache
         else
         {
             // Retrieve Storage Server information
-            int port_1 = node_in_cache_1->storage_server_port_for_client;
-            char ss_ip_1[21];
-            strcpy(ss_ip_1, node_in_cache_1->storage_server_ip);
+            port_2 = node_in_cache_2->storage_server_port_for_client;
+            strcpy(ss_ip_2, node_in_cache_2->storage_server_ip);
         }
+
+        // Connect SS1 to NM and send details of SS2
+        int sock_1;
+        struct sockaddr_in serv_addr_1;
+        char buffer_1[1024];
+
+        sock_1 = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock_1 == -1)
+        {
+            perror("socket() error");
+            exit(1);
+        }
+
+        memset(&serv_addr_1, 0, sizeof(serv_addr_1));
+        serv_addr_1.sin_family = AF_INET;
+        serv_addr_1.sin_addr.s_addr = inet_addr(ss_ip_1);
+        serv_addr_1.sin_port = htons(ss_nm_port_1);
+
+        if (connect(sock_1, (struct sockaddr *)&serv_addr_1, sizeof(serv_addr_1)) == -1)
+        {
+            perror("connect() error");
+            exit(1);
+        }
+
+        char send_details_to_ss1[BUF_SIZE];
+        sprintf(send_details_to_ss1, "%s %s %d %d 1", input, ss_ip_2, ss_client_port_2, ss_nm_port_2);
+
+        if (send(sock_1, send_details_to_ss1, strlen(send_details_to_ss1), 0) < 0)
+        {
+            perror("send() error");
+            exit(1);
+        }
+
+        // Receive Acknowledgement from SS (waiting for Agrim)
+
+        close(sock_1);
+
+        // Connect SS2 to NM and send details of SS1
+        int sock_2;
+        struct sockaddr_in serv_addr_2;
+        char buffer_2[1024];
+
+        sock_2 = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock_2 == -1)
+        {
+            perror("socket() error");
+            exit(1);
+        }
+
+        memset(&serv_addr_2, 0, sizeof(serv_addr_2));
+        serv_addr_2.sin_family = AF_INET;
+        serv_addr_2.sin_addr.s_addr = inet_addr(ss_ip_2);
+        serv_addr_2.sin_port = htons(ss_nm_port_2);
+
+        if (connect(sock_2, (struct sockaddr *)&serv_addr_2, sizeof(serv_addr_2)) == -1)
+        {
+            perror("connect() error");
+            exit(1);
+        }
+
+        char send_details_to_ss2[BUF_SIZE];
+        sprintf(send_details_to_ss2, "%s %s %d %d 1", input, ss_ip_1, ss_client_port_1, ss_nm_port_1);
+
+        if (send(sock_2, send_details_to_ss2, strlen(send_details_to_ss2), 0) < 0)
+        {
+            perror("send() error");
+            exit(1);
+        }
+
+        // Receive Acknowledgement from SS (waiting for Agrim)
+
+        close(sock_2);
     }
+
     else if (strncmp(input, "create_folder", strlen("create_folder")) == 0)
     {
         // command: create_folder folderpath
@@ -512,16 +648,42 @@ int what_to_do(char *input, int nm_sock_for_client)
                 exit(1);
             }
 
-            // Receive Acknowledgement from SS (waiting for Agrim)
+            // Receive Ack from Storage Server
+            int ack;
+            char buffer_ack[BUF_SIZE];
+            if (recv(sock2, buffer_ack, sizeof(buffer_ack), 0) < 0)
+            {
+                perror("recv() error");
+                exit(1);
+            }
 
-            // Insert into trie
-            insert(root, file_path, ss_num);
+            // Convert received acknowledgment to an integer
+            sscanf(buffer_ack, "%d", &ack);
 
-            // Insert into LRU
-            lru_node *new_lru_node = make_lru_node(file_path, ss_num, ss_client_port, ss_ip);
-            insert_at_front(new_lru_node, head);
+            close(sock2);
+            // Send the same acknowledgment to the client
+            char send_details_to_client[BUF_SIZE];
+            sprintf(send_details_to_client, "%d", ack);
+            if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
 
-            // Send Ack to client that opeartion is successfull
+            if (ack >= 0)
+            {
+                // Insert into trie
+                insert(root, file_path, ss_num);
+
+                // Insert into LRU
+                lru_node *new_lru_node = make_lru_node(file_path, ss_num, ss_client_port, ss_ip);
+                insert_at_front(new_lru_node, head);
+            }
+            else
+            {
+                perror("[-]File delete error");
+                exit(1);
+            }
 
             close(sock2);
         }
@@ -587,13 +749,42 @@ int what_to_do(char *input, int nm_sock_for_client)
             }
 
             // Receive Ack from Storage Server
+            int ack;
+            char buffer_ack[BUF_SIZE];
+            if (recv(sock2, buffer_ack, sizeof(buffer_ack), 0) < 0)
+            {
+                perror("recv() error");
+                exit(1);
+            }
+
+            // Convert received acknowledgment to an integer
+            sscanf(buffer_ack, "%d", &ack);
 
             close(sock2);
-            // Delete the file path from the trie
-            delete_node(root, file_path);
-            // Search and delete from the LRU cache
-            lru_node *deleted_node = delete_lru_node(file_path, head);
-            free(deleted_node);
+
+            // Send the same acknowledgment to the client
+            char send_details_to_client[BUF_SIZE];
+            sprintf(send_details_to_client, "%d", ack);
+            if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+
+            if (ack >= 0)
+            {
+                // Acknowledgment received successfully: delete the file path from the trie
+                delete_node(root, file_path);
+
+                // Search and delete from the LRU cache
+                lru_node *deleted_node = delete_lru_node(file_path, head);
+                free(deleted_node);
+            }
+            else
+            {
+                perror("[-]File delete error");
+                exit(1);
+            }
         }
     }
     else if (strncmp(input, "copy_folder", strlen("copy_folder")) == 0)
