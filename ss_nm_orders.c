@@ -57,19 +57,31 @@ void del_file(char* file, int nm_sockfd)
     if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
     {
         perror("[-]Send error");
-        exit(1);
+        return;
     }
     if(ack < 0)
     {
         perror("[-]File delete error");
-        exit(1);
+        return;
     }
 }
 
 void delete_dir(char* name, int nm_sockfd)
 {
+    int ack = 0;
     char buffer_nm[1024];
     bzero(buffer_nm, 1024);
+    if(ack == -1)
+    {
+        sprintf(buffer_nm, "%d", ack);
+        if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+        {
+            perror("[-]Send error");
+            return;
+        }
+        perror("[-]Directory delete error");
+        return;
+    }
     DIR* dir = opendir(name);
     if(dir == NULL)
     {
@@ -96,17 +108,11 @@ void delete_dir(char* name, int nm_sockfd)
             delete_dir(path, nm_sockfd);
         else
         {
-            int ack = remove(path);
-            sprintf(buffer_nm, "%d", ack);
-            if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
-            {
-                perror("[-]Send error");
-                exit(1);
-            }
+            ack = remove(path);
             if(ack < 0)
             {
                 perror("[-]File delete error");
-                exit(1);
+                return;
             }
         }
     }
@@ -122,12 +128,12 @@ void make_dir(char* name, int nm_sockfd)
     if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
     {
         perror("[-]Send error");
-        exit(1);
+        return;
     }
     if(ack < 0)
     {
         perror("[-]Directory create error");
-        exit(1);
+        return;
     }
 }
 
@@ -238,7 +244,7 @@ void copyDir(char* dir, char* dest, int nm_sockfd)
             continue;
         }
         if(S_ISDIR(statbuff.st_mode))
-            codyDir(path, new_dir, nm_sockfd);
+            copyDir(path, new_dir, nm_sockfd);
         else
             copyFile(path, new_dir, nm_sockfd);
         entry = readdir(dirp);
