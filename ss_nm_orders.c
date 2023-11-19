@@ -102,7 +102,7 @@ void delete_dir(char* name, int nm_sockfd)
         if(stat(path, &statbuff) < 0)
         {
             perror("[-]File stat error");
-            continue;
+            return;
         }
         if(S_ISDIR(statbuff.st_mode))
             delete_dir(path, nm_sockfd);
@@ -115,6 +115,7 @@ void delete_dir(char* name, int nm_sockfd)
                 return;
             }
         }
+        entry = readdir(dir);
     }
     rmdir(name);
 }
