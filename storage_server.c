@@ -282,16 +282,16 @@ void* client_handler(void* arg)
 //storage server implementation for NFS
 int main(int argc, char *argv[])
 {
-    // if(argc != 3)
-    // {
-    //     printf("Usage: %s <nm_port> <client_port>\n", argv[0]);
-    //     exit(1);
-    // }
+    if(argc != 3)
+    {
+        printf("Usage: %s <nm_port> <client_port>\n", argv[0]);
+        exit(1);
+    }
     
-    // int nm_port = atoi(argv[2]);
-    // int client_port = atoi(argv[3]);
-    int nm_port = 4040;
-    int client_port = 7070;
+    int nm_port = atoi(argv[1]);
+    int client_port = atoi(argv[2]);
+    // int nm_port = 4040;
+    // int client_port = 7070;
 
     printf("IP: %s\nNM_PORT: %d\nCLIENT_PORT: %d\nEnter file paths(relative to current directory) that the clients can access: (Enter 'DONE' when finished)\n", ip, nm_port, client_port);
 
