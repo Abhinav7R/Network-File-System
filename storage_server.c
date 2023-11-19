@@ -28,6 +28,7 @@ typedef struct threadargs
     int server_sock;
     int sockfd;
     int port;
+    int ss_port;
 }threadargs;
 
 void remove_nextline(char* str)
@@ -38,11 +39,11 @@ void remove_nextline(char* str)
     }
 }
 
-void* nm_handler(int nm_sockfd, int port, int client_port, char* ip, char* paths_of_all)
+void* nm_handler(int nm_sockfd, int port, int client_port, int ss_port, char* ip, char* paths_of_all)
 {
     char buffer_nm[1024];
     bzero(buffer_nm, 1024);
-    sprintf(buffer_nm, "IP: %s\nNM_PORT: %d\nCLIENT_PORT: %d\n", ip, port, client_port);
+    sprintf(buffer_nm, "IP: %s\nNM_PORT: %d\nCLIENT_PORT: %d\nSS_PORT: %d\n", ip, port, client_port, ss_port);
     if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
     {
         perror("[-]Send error");
@@ -80,6 +81,7 @@ void* nm_handler_for_ops(void* arg)
     int nm_sockfd = args_nm->sockfd;
     char buffer_nm[1024];
     int nm_port = args_nm->port;
+    int ss_port = args_nm->ss_port;
 
     server_sock_1 = socket(AF_INET, SOCK_STREAM, 0);
     if(server_sock_1 < 0)
@@ -167,8 +169,17 @@ void* nm_handler_for_ops(void* arg)
             token = strtok(NULL, " ");
             char* dest = token;
             remove_nextline(dest);
-
-            copyFile(source, dest, nm_sockfd);
+            char* port = strtok(NULL, " ");
+            remove_nextline(port);
+            if(strcmp(port, "same") == 0)
+                copyFile(source, dest, nm_sockfd);
+            else if(strcmp(port, "recieve") == 0)
+                recvFileFromSS(source, dest, ss_port);
+            else
+            {
+                int port_num = atoi(port);
+                sendFileToSS(source, dest, port_num);
+            }
         }
         else if(strncmp(copy_folder, buffer_nm, strlen(copy_folder)) == 0)
         {
@@ -179,8 +190,15 @@ void* nm_handler_for_ops(void* arg)
             token = strtok(NULL, " ");
             char* dest = token;
             remove_nextline(dest);
-
-            copyDir(source, dest, nm_sockfd);
+            if(strcmp(dest, "same") == 0)
+                copyDir(source, dest, nm_sockfd);
+            else if(strcmp(dest, "recieve") == 0)
+                recvDirFromSS(source, dest, ss_port);
+            else
+            {
+                int port_num = atoi(dest);
+                sendDirToSS(source, dest, port_num);
+            }
         }
         close(nm_sockfd);
     }
@@ -284,18 +302,19 @@ void* client_handler(void* arg)
 //storage server implementation for NFS
 int main(int argc, char *argv[])
 {
-    if(argc != 3)
+    if(argc != 4)
     {
-        printf("Usage: %s <nm_port> <client_port>\n", argv[0]);
+        printf("Usage: %s <nm_port> <client_port> <ss_port>\n", argv[0]);
         exit(1);
     }
     
     int nm_port = atoi(argv[1]);
     int client_port = atoi(argv[2]);
+    int ss_port = atoi(argv[3]);
     // int nm_port = 4040;
     // int client_port = 7070;
 
-    printf("IP: %s\nNM_PORT: %d\nCLIENT_PORT: %d\nEnter file paths(relative to current directory) that the clients can access: (Enter 'DONE' when finished)\n", ip, nm_port, client_port);
+    printf("IP: %s\nNM_PORT: %d\nCLIENT_PORT: %d\nSS_PORT: %d\nEnter file paths(relative to current directory) that the clients can access: (Enter 'DONE' when finished)\n", ip, nm_port, client_port, ss_port);
 
     files head = (files)malloc(sizeof(filepaths));
     files temp = head;
@@ -348,7 +367,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
     //sending storage server info to naming server
-    nm_handler(socky, nm_port, client_port, ip, paths_of_all);
+    nm_handler(socky, nm_port, client_port, ss_port, ip, paths_of_all);
     printf("[+]Naming server info sent.\n");
 
     pthread_t input[2];
