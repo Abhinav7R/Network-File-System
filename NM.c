@@ -27,6 +27,19 @@ typedef struct arguments_for_ss_thread
     struct sockaddr_in server_addr;
 }arguments_for_ss_thread;
 
+typedef struct arguments_for_client_thread
+{
+    int client_sock;
+    struct sockaddr_in client_addr;
+}arguments_for_client_thread;
+
+typedef struct arguments_for_individual_client_thread
+{
+    int client_id;
+    int client_sock;
+    struct sockaddr_in client_addr;
+}arguments_for_individual_client_thread;
+
 void* Handle_SS(void* arguments)
 {
     arguments_for_ss_thread* args = (arguments_for_ss_thread*)arguments;
@@ -114,8 +127,72 @@ void* Handle_SS(void* arguments)
             perror("setsockopt(SO_REUSEADDR) failed");
             exit(1);
         }
+    }   
+
+}
+
+void* Handle_Client(void* argument_for_client)
+{
+    arguments_for_individual_client_thread* args=(arguments_for_individual_client_thread*)argument_for_client;
+    int client_id=args->client_id;
+    int nm_sock_for_client=args->client_sock;
+    struct sockaddr_in nm_addr_for_client=args->client_addr;
+    socklen_t addr_size_for_client;
+    char buf[BUF_SIZE];
+
+    //send connection successful to client
+    addr_size_for_client = sizeof(nm_addr_for_client);
+    int client_sock = accept(nm_sock_for_client, (struct sockaddr*)&nm_addr_for_client, &addr_size_for_client);
+    if(client_sock < 0)
+    {
+        perror("[-]Accept error");
+        exit(1);
     }
-    
+
+    printf("[+]Client %d connected\n",client_id);
+
+    bzero(buf,BUF_SIZE);
+    strcpy(buf,"Connection successful");
+    if(send(client_sock,buf,strlen(buf),0)<0)
+    {
+        perror("send() error");
+        exit(1);
+    }
+
+    while(1)
+    {
+        char input[BUF_SIZE];
+        bzero(input,BUF_SIZE);
+        if(recv(client_sock,input,BUF_SIZE,0)<0)
+        {
+            perror("recv() error");
+            exit(1);
+        }
+
+        // printf("Received from client: %s\n",buf);
+        what_to_do(input,client_sock);
+    }
+
+}
+
+void* Main_Handle_Client(void* argument_for_client)
+{
+    arguments_for_client_thread* args=(arguments_for_client_thread*)argument_for_client;
+    int nm_sock_for_client=args->client_sock;
+    struct sockaddr_in nm_addr_for_client=args->client_addr;
+    socklen_t addr_size_for_client;
+
+    //make NUM_CLIENTS client threads
+    pthread_t client_thread_id[NUM_CLIENTS];
+    //array of structs for arguments for client threads
+    arguments_for_individual_client_thread* arguments_for_each_clients=(arguments_for_individual_client_thread*)malloc(sizeof(arguments_for_individual_client_thread)*NUM_CLIENTS);
+    for(int i=0;i<NUM_CLIENTS;i++)
+    {
+        arguments_for_each_clients[i].client_id=i;
+        arguments_for_each_clients[i].client_sock=nm_sock_for_client;
+        arguments_for_each_clients[i].client_addr=nm_addr_for_client;
+        pthread_create(&client_thread_id[i], NULL, Handle_Client, (void*)&arguments_for_each_clients[i]); 
+    }
 
 }
 
@@ -300,41 +377,56 @@ int main()
         exit(1);
     }
 
-    //send connection successful to client
-    addr_size_for_client = sizeof(nm_addr_for_client);
-    int client_sock = accept(nm_sock_for_client, (struct sockaddr*)&nm_addr_for_client, &addr_size_for_client);
-    if(client_sock < 0)
-    {
-        perror("[-]Accept error");
-        exit(1);
-    }
+    printf("[+]Listening for clients...\n");
 
-    printf("[+]Client connected\n");
+    pthread_t client_thread_id;
+    arguments_for_client_thread* arguments_for_clients=(arguments_for_client_thread*)malloc(sizeof(arguments_for_client_thread));
+    arguments_for_clients->client_sock = nm_sock_for_client;
+    arguments_for_clients->client_addr = nm_addr_for_client;
+    pthread_create(&client_thread_id, NULL, Main_Handle_Client, (void*)arguments_for_clients);
 
-    bzero(buf,BUF_SIZE);
-    strcpy(buf,"Connection successful");
-    if(send(client_sock,buf,strlen(buf),0)<0)
-    {
-        perror("send() error");
-        exit(1);
-    }
+    // //send connection successful to client
+    // addr_size_for_client = sizeof(nm_addr_for_client);
+    // int client_sock = accept(nm_sock_for_client, (struct sockaddr*)&nm_addr_for_client, &addr_size_for_client);
+    // if(client_sock < 0)
+    // {
+    //     perror("[-]Accept error");
+    //     exit(1);
+    // }
 
-    while(1)
-    {
-        char input[BUF_SIZE];
-        bzero(input,BUF_SIZE);
-        if(recv(client_sock,input,BUF_SIZE,0)<0)
-        {
-            perror("recv() error");
-            exit(1);
-        }
+    // printf("[+]Client connected\n");
 
-        // printf("Received from client: %s\n",buf);
-        what_to_do(input,client_sock);
-    }
+    // bzero(buf,BUF_SIZE);
+    // strcpy(buf,"Connection successful");
+    // if(send(client_sock,buf,strlen(buf),0)<0)
+    // {
+    //     perror("send() error");
+    //     exit(1);
+    // }
+
+    // while(1)
+    // {
+    //     char input[BUF_SIZE];
+    //     bzero(input,BUF_SIZE);
+    //     if(recv(client_sock,input,BUF_SIZE,0)<0)
+    //     {
+    //         perror("recv() error");
+    //         exit(1);
+    //     }
+
+    //     // printf("Received from client: %s\n",buf);
+    //     what_to_do(input,client_sock);
+    // }
+
+    pthread_join(ss_thread_id, NULL);
+    pthread_join(client_thread_id, NULL);
     
     // Close the Naming Server socket for storage server
     close(server_sock);
+    // Close the Naming Server socket for client
+    close(nm_sock_for_client);
+
+
 
     return 0;
 }
