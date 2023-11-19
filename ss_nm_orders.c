@@ -187,7 +187,7 @@ void copyFile(char* file, char* dir, int nm_sockfd)
     }
 }
 
-void codyDir(char* dir, char* dest, int nm_sockfd)
+void copyDir(char* dir, char* dest, int nm_sockfd)
 {
     int ack = -1;
     char buffer_nm[1024];

@@ -104,17 +104,18 @@ void* nm_handler_for_ops(void* arg)
         exit(1);
     }
 
-    addr_size = sizeof(server_addr_1);
-    nm_sockfd = accept(server_sock_1, (struct sockaddr*)&server_addr_1, &addr_size);
-    if(nm_sockfd < 0)
-    {
-        perror("[-]Accept error NM");
-        exit(1);
-    }
-    printf("[+]Naming server connected.\n");
 
     while(1)
     {
+        addr_size = sizeof(server_addr_1);
+        nm_sockfd = accept(server_sock_1, (struct sockaddr*)&server_addr_1, &addr_size);
+        if(nm_sockfd < 0)
+        {
+            perror("[-]Accept error NM");
+            exit(1);
+        }
+        printf("[+]Naming server connected.\n");
+
         bzero(buffer_nm, 1024);
         if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
         {
@@ -163,7 +164,7 @@ void* nm_handler_for_ops(void* arg)
             token = strtok(NULL, " ");
             char* source = token;
             remove_nextline(source);
-            token = strok(NULL, " ");
+            token = strtok(NULL, " ");
             char* dest = token;
             remove_nextline(dest);
 
@@ -175,14 +176,14 @@ void* nm_handler_for_ops(void* arg)
             token = strtok(NULL, " ");
             char* source = token;
             remove_nextline(source);
-            token = strok(NULL, " ");
+            token = strtok(NULL, " ");
             char* dest = token;
             remove_nextline(dest);
 
             copyDir(source, dest, nm_sockfd);
         }
+        close(nm_sockfd);
     }
-    close(nm_sockfd);
     close(server_sock_1);
     pthread_exit(NULL);
 }
@@ -220,17 +221,18 @@ void* client_handler(void* arg)
         exit(1);
     }
 
-    addr_size = sizeof(server_addr_2);
-    client_sockfd = accept(server_sock_2, (struct sockaddr*)&server_addr_2, &addr_size);
-    if(client_sockfd < 0)
-    {
-        perror("[-]Accept error Client");
-        exit(1);
-    }
-    printf("[+]Client connected.\n");
     
     while(1)
     {
+        addr_size = sizeof(server_addr_2);
+        client_sockfd = accept(server_sock_2, (struct sockaddr*)&server_addr_2, &addr_size);
+        if(client_sockfd < 0)
+        {
+            perror("[-]Accept error Client");
+            exit(1);
+        }
+        printf("[+]Client connected.\n");
+
         //input from client
         bzero(buffer_client, 1024);
         if(recv(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
@@ -272,8 +274,8 @@ void* client_handler(void* arg)
             
             retrieve_info(file, client_sockfd);
         }
+        close(client_sockfd);
     }
-    close(client_sockfd);
     close(server_sock_2);
     pthread_exit(NULL);
 }

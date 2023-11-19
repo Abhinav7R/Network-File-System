@@ -339,7 +339,7 @@ int what_to_do(char *input, int nm_sock_for_client)
     }
     else if (strncmp(input, "copy_file", strlen("copy_file")) == 0)
     {
-        // command: copy_file old_filepath new_folderpath
+        command: copy_file old_filepath new_folderpath
         char temp[1024];
         strcpy(temp, input);
 
