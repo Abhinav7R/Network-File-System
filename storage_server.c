@@ -170,43 +170,37 @@ void* nm_handler_for_ops(void* arg)
         }
         else if(strncmp(copy_file, buffer_nm, strlen(copy_file)) == 0)
         {
-            // char* token = strtok(buffer_nm, " ");
-            // token = strtok(NULL, " ");
-            // char* source = token;
-            // remove_nextline(source);
-            // token = strtok(NULL, " ");
-            // char* dest = token;
-            // remove_nextline(dest);
-            // char* port = strtok(NULL, " ");
-            // remove_nextline(port);
-            // if(strcmp(port, "same") == 0)
-            //     copyFile(source, dest, nm_sockfd);
-            // else if(strcmp(port, "recieve") == 0)
-            //     recvFileFromSS(source, dest, ss_port);
-            // else
-            // {
-            //     int port_num = atoi(port);
-            //     sendFileToSS(source, dest, port_num);
-            // }
+            char* token = strtok(buffer_nm, " ");
+            token = strtok(NULL, " ");
+            char* source = token;
+            remove_nextline(source);
+            token = strtok(NULL, " ");
+            char* dest = token;
+            remove_nextline(dest);
+            char* port = strtok(NULL, " ");
+            remove_nextline(port);
+            if(strcmp(port, "same") == 0)
+                copyFile(source, dest, nm_sockfd);
+            else if(strcmp(port, "recieve") == 0)
+                recvFileFromSS(source, dest, nm_sockfd);
+            else if(strcmp(port, "send") == 0)
+                sendFileToSS(source, dest, nm_sockfd);
         }
         else if(strncmp(copy_folder, buffer_nm, strlen(copy_folder)) == 0)
         {
-            // char* token = strtok(buffer_nm, " ");
-            // token = strtok(NULL, " ");
-            // char* source = token;
-            // remove_nextline(source);
-            // token = strtok(NULL, " ");
-            // char* dest = token;
-            // remove_nextline(dest);
-            // if(strcmp(dest, "same") == 0)
-            //     copyDir(source, dest, nm_sockfd);
-            // else if(strcmp(dest, "recieve") == 0)
-            //     recvDirFromSS(source, dest, ss_port);
-            // else
-            // {
-            //     int port_num = atoi(dest);
-            //     sendDirToSS(source, dest, port_num);
-            // }
+            char* token = strtok(buffer_nm, " ");
+            token = strtok(NULL, " ");
+            char* source = token;
+            remove_nextline(source);
+            token = strtok(NULL, " ");
+            char* dest = token;
+            remove_nextline(dest);
+            if(strcmp(dest, "same") == 0)
+                copyDir(source, dest, nm_sockfd);
+            else if(strcmp(dest, "recieve") == 0)
+                recvDirFromSS(source, dest, nm_sockfd);
+            else if(strcmp(dest, "send") == 0)
+                sendDirToSS(source, dest, nm_sockfd);
         }
         close(nm_sockfd);
     }

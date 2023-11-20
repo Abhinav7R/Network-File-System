@@ -7,7 +7,7 @@ void read_file(char* file, int client_sockfd)
     if(fd == NULL)
     {
         perror("[-]File open error");
-        exit(1);
+        return;
     }
     fseek(fd, 0, SEEK_END);
     long size = ftell(fd);
@@ -20,13 +20,13 @@ void read_file(char* file, int client_sockfd)
     if(send(client_sockfd, buffer_client, BUF_SIZE, 0) < 0)
     {
         perror("[-]Send error");
-        exit(1);
+        return;
     }
     bzero(buffer_client, 1024);
     if(recv(client_sockfd, buffer_client, BUF_SIZE, 0) < 0)
     {
         perror("[-]Receive error");
-        exit(1);
+        return;
     }
     while(num_packets--)
     {
@@ -41,14 +41,14 @@ void read_file(char* file, int client_sockfd)
             perror("[-]Send error");
             exit(1);
         }
-        bzero(buffer_client, 1024);
-        if(recv(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
-        {
-            perror("[-]Receive error");
-            exit(1);
-        }
     }
     fclose(fd);
+    bzero(buffer_client, 1024);
+    if(recv(client_sockfd, buffer_client, sizeof(buffer_client), 0) < 0)
+    {
+        perror("[-]Receive error");
+        exit(1);
+    }
 }
 
 void write_file(char* file, int client_sockfd)

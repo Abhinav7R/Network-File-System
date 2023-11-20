@@ -259,22 +259,89 @@ void copyDir(char* dir, char* dest, int nm_sockfd)
     }
 }
 
-// void recvFileFromSS(char* file, char* dest, int ss_port)
-// {
+void recvFileFromSS(char* file, char* dest, int nm_sockfd)
+{
+    int ack = -1;
+    char buffer_nm[1024];
+    bzero(buffer_nm, 1024);
+    if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+    {
+        perror("[-]Recv error");
+        return;
+    }
+    if(strncmp(buffer_nm, "create_file", strlen("create_file")) == 0)
+        make_file(buffer_nm, nm_sockfd);
 
-// }
+    bzero(buffer_nm, 1024);
+    if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+    {
+        perror("[-]Recv error");
+        return;
+    }
+    int num_packets = atoi(buffer_nm);
+    bzero(buffer_nm, 1024);
+    if(send(nm_sockfd, "ack", strlen("ack"), 0) < 0)
+    {
+        perror("[-]Send error");
+        return;
+    }
 
-// void sendFileToSS(char* file, char* dest, int port_num)
-// {
+    FILE* fd = fopen(file, "w+");
+    while(num_packets--)
+    {
+        bzero(buffer_nm, 1024);
+        if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+        {
+            perror("[-]Recv error");
+            return;
+        }
+        fprintf(fd, "%s", buffer_nm);
+    }
+    fprintf(fd, "\n");
+    fclose(fd);
+    ack = 1;
+    bzero(buffer_nm, 1024);
+    sprintf(buffer_nm, "%d", ack);
+    if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+    {
+        perror("[-]Send error");
+        return;
+    }
+}
 
-// }
+void sendFileToSS(char* file, char* dest, int nm_sockfd)
+{
+    int ack = -1;
+    char buffer_nm[1024];
+    bzero(buffer_nm, 1024);
 
-// void recvDirFromSS(char* dir, char* dest, int ss_port)
-// {
-    
-// }
+    char file_name[1024];
+    char* token = strtok(file, "/");
+    while(token != NULL)
+    {
+        bzero(file_name, 1024);
+        strcpy(file_name, token);
+        token = strtok(NULL, "/");
+    }
 
-// void sendDirToSS(char* dir, char* dest, int port_num)
-// {
+    char* new_file = (char*)malloc(sizeof(char) * (strlen(dest) + strlen(file) + 5));
+    sprintf(new_file, "%s/%s", dest, file_name);
+    sprintf(buffer_nm, "create_file %s", new_file);
+    if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+    {
+        perror("[-]Send error");
+        return;
+    }
 
-// }
+    read(nm_sockfd, file, sizeof(file));
+}
+
+void recvDirFromSS(char* dir, char* dest, int nm_sockfd)
+{
+
+}
+
+void sendDirToSS(char* dir, char* dest, int nm_sockfd)
+{
+
+}

@@ -211,14 +211,16 @@ int main()
                         exit(1);
                     }
                     printf("%s",buf2);
-                    bzero(buf2,BUF_SIZE);
-                    if(send(sock2,"ack",strlen("ack"),0)<0)
-                    {
-                        perror("send() error");
-                        exit(1);
-                    }
                 }
                 printf("\n");
+                int ack = 1;
+                bzero(buf2,BUF_SIZE);
+                sprintf(buf2,"%d",ack);
+                if(send(sock2,buf2,BUF_SIZE,0)<0)
+                {
+                    perror("send() error");
+                    exit(1);
+                }
             }
             else if(strncmp(input,"write",strlen("write"))==0)
             {
