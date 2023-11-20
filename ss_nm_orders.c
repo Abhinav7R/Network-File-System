@@ -144,8 +144,10 @@ void copyFile(char* file, char* dir, int nm_sockfd)
     char buffer_nm[1024];
     bzero(buffer_nm, 1024);
 
+    char* temp = (char*)malloc(sizeof(char) * (strlen(file) + 1));
+    strcpy(temp, file);
     char file_name[1024];
-    char* token = strtok(file, "/");
+    char* token = strtok(temp, "/");
     while(token != NULL)
     {
         bzero(file_name, 1024);
