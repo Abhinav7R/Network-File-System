@@ -223,6 +223,15 @@ int main()
                     perror("send() error");
                     exit(1);
                 }
+
+                //send done ack to naming server
+                bzero(buf,BUF_SIZE);
+                strcpy(buf,"done");
+                if(send(sock,buf,BUF_SIZE,0)<0)
+                {
+                    perror("send() error");
+                    exit(1);
+                }
             }
             else if(strncmp(input,"write",strlen("write"))==0)
             {
@@ -266,6 +275,14 @@ int main()
                     //     perror("recv() error");
                     //     exit(1);
                     // }
+                }
+                //send ack to naming server
+                bzero(buf,BUF_SIZE);
+                strcpy(buf,"done");
+                if(send(sock,buf,BUF_SIZE,0)<0)
+                {
+                    perror("send() error");
+                    exit(1);
                 }
                 // printf("done writing\n");
             }
@@ -439,8 +456,5 @@ int main()
 
     printf("Exiting...\n");
     close(sock);
-
-    
-    
 
 }

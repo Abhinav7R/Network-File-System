@@ -71,6 +71,31 @@ int search(trie* root, char* str)
     return 0;
 }
 
+rwlock_t* find_rwlock(trie* root, char* str)
+{
+    sem_wait(&trie_lock);
+    if(str[strlen(str)-1] == '\n')
+        str[strlen(str)-1] = '\0';
+    trie* p = root;
+    for (int i = 0; i < strlen(str); i++)
+    {
+        
+        if (p->next[str[i]] == NULL)
+        {
+            sem_post(&trie_lock);
+            return NULL;
+        }
+        p = p->next[str[i]];
+    }
+    if (p->is_end > 0)
+    {
+        sem_post(&trie_lock);
+        return &(p->rwlock);
+    }
+    sem_post(&trie_lock);
+    return NULL;
+}
+
 //delete from trie
 
 void delete_node(trie* root, char* str)

@@ -29,6 +29,8 @@ int what_to_do(char *input, int nm_sock_for_client)
             // printf("not in cache\n");
             // find in trie
             int ss_num = search(root, filename);
+            rwlock_t *rwlock;
+            rwlock = find_rwlock(root, filename);
             // printf("ss_num: %d\n", ss_num);
             if (ss_num == 0)
             {
@@ -55,12 +57,21 @@ int what_to_do(char *input, int nm_sock_for_client)
                 sprintf(port_as_string, " %d", port);
                 strcat(send_details_to_client, port_as_string);
                 
+                acquire_readlock(rwlock);
                 printf("ss details sent to client: %s#\n", send_details_to_client);
                 if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
                 {
                     perror("send() error");
                     exit(1);
                 }
+                //receive ack from client
+                char ack[BUF_SIZE];
+                if (recv(nm_sock_for_client, ack, sizeof(ack), 0) < 0)
+                {
+                    perror("recv() error");
+                    exit(1);
+                }
+                release_readlock(rwlock);
                 return 1;
             }
         }
@@ -72,12 +83,23 @@ int what_to_do(char *input, int nm_sock_for_client)
             strcpy(ss_ip, node_in_cache->storage_server_ip);
             // concatenate ip and port as a string separated by space
             sprintf(send_details_to_client, "%s %d", ss_ip, port);
+            rwlock_t *rwlock;
+            rwlock = find_rwlock(root, filename);
+            acquire_readlock(rwlock);
             printf("ss details sent to client: %s#\n", send_details_to_client);
             if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
             {
                 perror("send() error");
                 exit(1);
             }
+            //receive ack from client
+            char ack[BUF_SIZE];
+            if (recv(nm_sock_for_client, ack, sizeof(ack), 0) < 0)
+            {
+                perror("recv() error");
+                exit(1);
+            }
+            release_readlock(rwlock);
         }
     }
     else if (strncmp(input, "write", strlen("write")) == 0)
@@ -124,12 +146,22 @@ int what_to_do(char *input, int nm_sock_for_client)
                 sprintf(port_as_string, " %d", port);
                 strcat(send_details_to_client, port_as_string);
 
+                rwlock_t* rwlock_t = find_rwlock(root, file_path);
+                acquire_writelock(rwlock_t);
                 printf("ss details sent to the client: %s#\n", send_details_to_client);
                 if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
                 {
                     perror("send() error");
                     exit(1);
                 }
+                //receive ack from client
+                char ack[BUF_SIZE];
+                if (recv(nm_sock_for_client, ack, sizeof(ack), 0) < 0)
+                {
+                    perror("recv() error");
+                    exit(1);
+                }
+                release_writelock(rwlock_t);
             }
         }
         // File found in the LRU cache
@@ -144,12 +176,21 @@ int what_to_do(char *input, int nm_sock_for_client)
             // Concatenate IP and port as a string separated by space
             sprintf(send_details_to_client, "%s %d", ss_ip, port);
             printf("ss details sent to the client: %s#\n", send_details_to_client);
-
+            rwlock_t* rwlock_t = find_rwlock(root, file_path);
+            acquire_writelock(rwlock_t);
             if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
             {
                 perror("send() error");
                 exit(1);
             }
+            //receive ack from client
+            char ack[BUF_SIZE];
+            if (recv(nm_sock_for_client, ack, sizeof(ack), 0) < 0)
+            {
+                perror("recv() error");
+                exit(1);
+            }
+            release_writelock(rwlock_t);
         }
     }
 
