@@ -335,7 +335,7 @@ void sendFileToSS(char* file, char* dest, int nm_sockfd)
         return;
     }
 
-    read(nm_sockfd, file, sizeof(file));
+    read_file(file, nm_sockfd);
 }
 
 void recvDirFromSS(char* dir, char* dest, int nm_sockfd)
