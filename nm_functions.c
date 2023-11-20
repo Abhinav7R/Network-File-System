@@ -417,8 +417,8 @@ int what_to_do(char *input, int nm_sock_for_client)
         char *ss_ip_1;
         char *ss_ip_2;
         int port_1, port_2;
-        char ss_ip_3[21];
-        char ss_ip_4[21];
+        // char ss_ip_3[21];
+        // char ss_ip_4[21];
 
         if (node_in_cache_1 == NULL)
         {
@@ -454,7 +454,7 @@ int what_to_do(char *input, int nm_sock_for_client)
         else
         {
             port_1 = node_in_cache_1->storage_server_port_for_client;
-            strcpy(ss_ip_3, node_in_cache_1->storage_server_ip);
+            strcpy(ss_ip_1, node_in_cache_1->storage_server_ip);
         }
 
         if (node_in_cache_2 == NULL)
@@ -491,14 +491,10 @@ int what_to_do(char *input, int nm_sock_for_client)
         {
             // Retrieve Storage Server information
             port_2 = node_in_cache_2->storage_server_port_for_client;
-            strcpy(ss_ip_4, node_in_cache_2->storage_server_ip);
+            strcpy(ss_ip_2, node_in_cache_2->storage_server_ip);
         }
         if (ss_num_1 == ss_num_2)
         {
-            // send "input same"
-            // recv ack
-            // send ack to client
-
             // Make a connection with the Storage Server
             int sock1;
             struct sockaddr_in serv_addr1;
@@ -554,15 +550,156 @@ int what_to_do(char *input, int nm_sock_for_client)
         }
         else
         {
+            int sock_ss1, sock_ss2;
+            struct sockaddr_in serv_addr_ss1, serv_addr_ss2;
+            char buffer_ss1[BUF_SIZE], buffer_ss2[BUF_SIZE];
 
-            // connect nm to both SS1 and SS2
-            // recv from SS1 "create_file filepath"
-            // send above to SS2
-            // recv NUM_packets from SS1
-            // send NUM_packets to SS2
-            // while(NUM_packets--)
-            // recv from SS1 send to SS2
-            // send done ack to client
+            // Create sockets
+            sock_ss1 = socket(AF_INET, SOCK_STREAM, 0);
+            sock_ss2 = socket(AF_INET, SOCK_STREAM, 0);
+
+            if (sock_ss1 == -1 || sock_ss2 == -1)
+            {
+                perror("socket() error");
+                exit(1);
+            }
+
+            // Setup connection details for Storage Server 1
+            memset(&serv_addr_ss1, 0, sizeof(serv_addr_ss1));
+            serv_addr_ss1.sin_family = AF_INET;
+            serv_addr_ss1.sin_addr.s_addr = inet_addr(ss_ip_1);
+            serv_addr_ss1.sin_port = htons(ss_nm_port_1);
+
+            // Setup connection details for Storage Server 2
+            memset(&serv_addr_ss2, 0, sizeof(serv_addr_ss2));
+            serv_addr_ss2.sin_family = AF_INET;
+            serv_addr_ss2.sin_addr.s_addr = inet_addr(ss_ip_2);
+            serv_addr_ss2.sin_port = htons(ss_nm_port_2);
+
+            // Connect to Storage Server 1
+            if (connect(sock_ss1, (struct sockaddr *)&serv_addr_ss1, sizeof(serv_addr_ss1)) == -1)
+            {
+                perror("connect() error");
+                exit(1);
+            }
+
+            // Connect to Storage Server 2
+            if (connect(sock_ss2, (struct sockaddr *)&serv_addr_ss2, sizeof(serv_addr_ss2)) == -1)
+            {
+                perror("connect() error");
+                exit(1);
+            }
+
+            // Receive "create_file filepath" command from Storage Server 1
+            char create_file_command_ss1[BUF_SIZE];
+            if (recv(sock_ss1, create_file_command_ss1, sizeof(create_file_command_ss1), 0) < 0)
+            {
+                perror("recv() error");
+                exit(1);
+            }
+
+            // Tokenize the "create_file filepath" command and store filepath
+            char temp[BUF_SIZE];
+            strcpy(temp, create_file_command_ss1);
+            char *token_ss1 = strtok(temp, " ");
+            token_ss1 = strtok(NULL, " ");
+
+            char filepath_ss1[BUF_SIZE];
+            strcpy(filepath_ss1, token_ss1);
+            printf("filepath: %s\n", filepath_ss1);
+
+            // Insert into trie
+            insert(root, filepath_ss1, ss_num_2);
+
+            // Insert into LRU
+            lru_node *new_lru_node = make_lru_node(filepath_ss1, ss_num_2, ss_client_port_2, ss_ip_2);
+            insert_at_front(new_lru_node, head);
+
+            // Send "create_file filepath" command to Storage Server 2
+            if (send(sock_ss2, create_file_command_ss1, strlen(create_file_command_ss1), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+
+            // Receive "NUM_packets" from Storage Server 1
+            int num_packets;
+            char num_packets_ss1[BUF_SIZE];
+            if (recv(sock_ss1, num_packets_ss1, sizeof(num_packets_ss1), 0) < 0)
+            {
+                perror("recv() error");
+                exit(1);
+            }
+
+            // Send the received "NUM_packets" to Storage Server 2
+            if (send(sock_ss2, num_packets_ss1, strlen(num_packets_ss1), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+
+            // Recv ack from SS2 and send to SS1
+            char num_packets_ack[BUF_SIZE];
+            if (recv(sock_ss2, num_packets_ack, sizeof(num_packets_ack), 0) < 0)
+            {
+                perror("recv() error");
+                exit(1);
+            }
+
+            // Send ack to SS1
+            if (send(sock_ss1, num_packets_ack, strlen(num_packets_ack), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+
+            // Convert NUM_packets to an integer
+            sscanf(num_packets_ss1, "%d", &num_packets);
+
+            // While loop to receive and send data packets
+            while (num_packets--)
+            {
+                // Receive data packets from Storage Server 1
+                char data_packet_ss1[BUF_SIZE];
+                if (recv(sock_ss1, data_packet_ss1, sizeof(data_packet_ss1), 0) < 0)
+                {
+                    perror("recv() error");
+                    exit(1);
+                }
+
+                // Send data packets to Storage Server 2
+                if (send(sock_ss2, data_packet_ss1, strlen(data_packet_ss1), 0) < 0)
+                {
+                    perror("send() error");
+                    exit(1);
+                }
+            }
+
+            // Recv ack from SS2 and send to SS1 and client
+            char ack_ss2_full[BUF_SIZE];
+            if (recv(sock_ss2, ack_ss2_full, sizeof(ack_ss2_full), 0) < 0)
+            {
+                perror("recv() error");
+                exit(1);
+            }
+
+            // Send ack to SS1
+            if (send(sock_ss1, ack_ss2_full, strlen(ack_ss2_full), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+
+            // Send ack to the client
+            if (send(nm_sock_for_client, ack_ss2_full, strlen(ack_ss2_full), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+
+            // Close connections
+            close(sock_ss1);
+            close(sock_ss2);
         }
     }
 
