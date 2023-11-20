@@ -55,15 +55,23 @@ void del_file(char* file, int nm_sockfd)
     bzero(buffer_nm, 1024);
     int ack = remove(file);
     sprintf(buffer_nm, "%d", ack);
-    if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+    if(ack == 0)
     {
-        perror("[-]Send error");
-        return;
+        if(send(nm_sockfd, "1", strlen("1"), 0) < 0)
+        {
+            perror("[-]Send error");
+            exit(1);
+        }
     }
-    if(ack < 0)
+    else
     {
+        if(send(nm_sockfd, "-1", strlen("-1"), 0) < 0)
+        {
+            perror("[-]Send error");
+            exit(1);
+        }
         perror("[-]File delete error");
-        return;
+        exit(1);
     }
 }
 
@@ -319,7 +327,6 @@ void recvFileFromSS(char* file, char* dest, int nm_sockfd)
 
 void sendFileToSS(char* file, char* dest, int nm_sockfd)
 {
-    int ack = -1;
     char buffer_nm[1024];
     bzero(buffer_nm, 1024);
 
@@ -349,14 +356,4 @@ void sendFileToSS(char* file, char* dest, int nm_sockfd)
     }
 
     read_file(file, nm_sockfd);
-}
-
-void recvDirFromSS(char* dir, char* dest, int nm_sockfd)
-{
-
-}
-
-void sendDirToSS(char* dir, char* dest, int nm_sockfd)
-{
-
 }

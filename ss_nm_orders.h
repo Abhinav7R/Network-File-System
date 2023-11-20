@@ -8,5 +8,3 @@ void copyFile(char* file, char* dir, int nm_sockfd);
 void copyDir(char* dir, char* dest, int nm_sockfd);
 void recvFileFromSS(char* file, char* dest, int nm_sockfd);
 void sendFileToSS(char* file, char* dest, int nm_sockfd);
-void recvDirFromSS(char* dir, char* dest, int nm_sockfd);
-void sendDirToSS(char* dir, char* dest, int nm_sockfd);
