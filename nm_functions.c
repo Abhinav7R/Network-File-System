@@ -17,21 +17,22 @@ extern ss_info *array_of_ss_info;
 
 int what_to_do(char *input, int nm_sock_for_client)
 {
-    // printf("input: %s\n", input);
+    printf("task of nm server: %s\n", input);
     if ((strncmp(input, "read", strlen("read")) == 0) || (strncmp(input, "retrieve", strlen("retrieve")) == 0))
     {
         char *filename = strtok(input, " ");
         filename = strtok(NULL, " ");
-        printf("filename: %s\n", filename);
+        // printf("filename: %s\n", filename);
         lru_node *node_in_cache = find_and_return(filename, head);
         if (node_in_cache == NULL)
         {
-            printf("not in cache\n");
+            // printf("not in cache\n");
             // find in trie
             int ss_num = search(root, filename);
-            printf("ss_num: %d\n", ss_num);
+            // printf("ss_num: %d\n", ss_num);
             if (ss_num == 0)
             {
+                printf("file not found!!!\n");
                 // send -1 as acknm_sock_for_client
                 char send_details_to_client[BUF_SIZE];
                 sprintf(send_details_to_client, "%d", -1);
@@ -44,7 +45,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             }
             else
             {
-                printf("found in trie\n");
+                // printf("found in trie\n");
                 char send_details_to_client[BUF_SIZE];
                 int port = array_of_ss_info[ss_num].ss_client_port;
                 strcpy(send_details_to_client, array_of_ss_info[ss_num].ss_ip);
@@ -54,7 +55,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 sprintf(port_as_string, " %d", port);
                 strcat(send_details_to_client, port_as_string);
 
-                printf("whats sent to client: %s#\n", send_details_to_client);
+                printf("ss details sent to client: %s#\n", send_details_to_client);
                 if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
                 {
                     perror("send() error");
@@ -91,10 +92,10 @@ int what_to_do(char *input, int nm_sock_for_client)
         // File not found in cache
         if (node_in_cache == NULL)
         {
-            printf("not in cache\n");
+            // printf("not in cache\n");
             // Search in trie
             int ss_num = search(root, file_path);
-            printf("ss_num: %d\n", ss_num);
+            // printf("ss_num: %d\n", ss_num);
 
             if (ss_num == 0)
             {
@@ -110,7 +111,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             }
             else
             {
-                printf("found in trie\n");
+                // printf("found in trie\n");
                 // File found in trie, send storage server details to the client
                 char send_details_to_client[BUF_SIZE];
                 int port = array_of_ss_info[ss_num].ss_client_port;
@@ -121,7 +122,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 sprintf(port_as_string, " %d", port);
                 strcat(send_details_to_client, port_as_string);
 
-                printf("whats sent to the client: %s#\n", send_details_to_client);
+                printf("ss details sent to the client: %s#\n", send_details_to_client);
                 if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
                 {
                     perror("send() error");
@@ -168,6 +169,7 @@ int what_to_do(char *input, int nm_sock_for_client)
         if (search(root, file_path) > 0)
         {
             // Send -1 acknowledgment to the client
+            printf("file already exists!!!\n");
             char send_details_to_client[BUF_SIZE];
             sprintf(send_details_to_client, "%d", -1);
             if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
@@ -193,6 +195,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             // Handle directory not found
             if (ss_num == 0)
             {
+                printf("directory not found!!!\n");
                 char send_details_to_client[BUF_SIZE];
                 sprintf(send_details_to_client, "%d", -1);
                 if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
@@ -273,6 +276,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 // Insert into LRU
                 lru_node *new_lru_node = make_lru_node(file_path, ss_num, ss_client_port, ss_ip);
                 insert_at_front(new_lru_node, head);
+                printf("create file done\n");
             }
             else
             {
@@ -305,6 +309,7 @@ int what_to_do(char *input, int nm_sock_for_client)
 
         if (ss_num <= 0)
         {
+            printf("file not found!!!\n");
             char send_details_to_client[BUF_SIZE];
             sprintf(send_details_to_client, "%d", -1);
             if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
@@ -379,6 +384,7 @@ int what_to_do(char *input, int nm_sock_for_client)
 
             if (ack >= 0)
             {
+                printf("deleted file successfully!\n");
                 // Acknowledgment received successfully: delete the file path from the trie
                 delete_node(root, file_path);
 
@@ -388,8 +394,9 @@ int what_to_do(char *input, int nm_sock_for_client)
             }
             else
             {
-                perror("[-]File delete error");
-                exit(1);
+                printf("file not found!!!\n");
+                // perror("[-]File delete error");
+                // exit(1);
             }
 
             close(sock2);
@@ -424,10 +431,10 @@ int what_to_do(char *input, int nm_sock_for_client)
 
         if (node_in_cache_1 == NULL)
         {
-            printf("not in cache\n");
+            // printf("not in cache\n");
             // Search in trie
             ss_num_1 = search(root, old_filepath);
-            printf("ss_num_1: %d\n", ss_num_1);
+            // printf("ss_num_1: %d\n", ss_num_1);
 
             if (ss_num_1 == 0)
             {
@@ -444,7 +451,7 @@ int what_to_do(char *input, int nm_sock_for_client)
 
             else
             {
-                printf("found in trie\n");
+                // printf("found in trie\n");
                 // File found in trie
                 // Retrieve Storage Server information
                 ss_client_port_1 = array_of_ss_info[ss_num_1].ss_client_port;
@@ -461,10 +468,10 @@ int what_to_do(char *input, int nm_sock_for_client)
 
         if (node_in_cache_2 == NULL)
         {
-            printf("not in cache\n");
+            // printf("not in cache\n");
             // Search in trie
             ss_num_2 = search(root, new_folderpath);
-            printf("ss_num_2: %d\n", ss_num_2);
+            // printf("ss_num_2: %d\n", ss_num_2);
 
             if (ss_num_2 == 0)
             {
@@ -480,7 +487,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             }
             else
             {
-                printf("found in trie\n");
+                // printf("found in trie\n");
                 // File found in trie
                 //  Retrieve Storage Server information
                 ss_client_port_2 = array_of_ss_info[ss_num_2].ss_client_port;

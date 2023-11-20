@@ -120,7 +120,8 @@ int main()
                 perror("send() error");
                 exit(1);
             }
-        }       
+        }
+        printf("sent action to naming server: %s\n",input);       
 
         //if input is read write or retrieve information then receive port and ip of storage server
         //connect to storage server and send action to storage server
@@ -144,7 +145,7 @@ int main()
             
             char *server_ip = strtok(buf," ");
             char *server_port = strtok(NULL," ");
-            printf("ip: %s \tport: %s\n",server_ip,server_port);
+            printf("received naming server ip: %s \tport: %s\n",server_ip,server_port);
 
             //connect to storage server
             int sock2;
@@ -184,7 +185,7 @@ int main()
                     perror("send() error");
                     exit(1);
                 }
-                printf("sent read to storage server\n");
+                // printf("sent read to storage server\n");
                 //receive data from storage server
                 //first receive number of packets as integer    
                 char num_packets[BUF_SIZE];
@@ -201,6 +202,7 @@ int main()
                     perror("send() error");
                     exit(1);
                 }
+                printf("reading file...\n");
                 // recv data from storage server
                 while(num_packets_int--)
                 {
@@ -238,7 +240,7 @@ int main()
                 }
                 //send data to storage server
                 char data[BUF_SIZE];
-                printf("Enter data: \n");
+                printf("Enter data to write in file: \n");
                 //scan data until 2 enters continuously
                 while(1)
                 {
@@ -265,6 +267,7 @@ int main()
                     //     exit(1);
                     // }
                 }
+                // printf("done writing\n");
             }
             else if(strncmp(input,"retrieve",strlen("retrieve"))==0)
             {
@@ -281,7 +284,16 @@ int main()
                     perror("recv() error");
                     exit(1);
                 }
-                printf("%s\n",buf2);
+                if(strcmp(buf2,"-1")==0)
+                {
+                    printf("File doesnt exist\n");
+                    continue;
+                }
+                else
+                {
+                    printf("details of file:\n");
+                    printf("%s\n",buf2);
+                }
                 
                 
             }
@@ -304,6 +316,15 @@ int main()
                 }
                 
                 //if ack is -1 then file cant be created as it already exists
+                if(strcmp(buf,"-1")==0)
+                {
+                    printf("File already exists\n");
+                    continue;
+                }
+                else
+                {
+                    printf("file created!!\n");
+                }
 
                 // printf("%s",buf);
             }
@@ -315,6 +336,15 @@ int main()
                     perror("recv() error");
                     exit(1);
                 }
+                if(strcmp(buf,"-1")==0)
+                {
+                    printf("File can't be deleted\n");
+                    continue;
+                }
+                else
+                {
+                    printf("file deleted successfully!!\n");
+                }
                 // printf("%s",buf);
             }
             else if(strncmp(input,"copy_file",strlen("copy_file"))==0)
@@ -325,7 +355,16 @@ int main()
                     perror("recv() error");
                     exit(1);
                 }
-                printf("%s",buf);
+                // printf("%s",buf);
+                if(strcmp(buf,"-1")==0)
+                {
+                    printf("File can't be copied\n");
+                    continue;
+                }
+                else
+                {
+                    printf("file copied successfully!!\n");
+                }
             }
             else if(strncmp(input,"create_folder",strlen("create_folder"))==0)
             {
@@ -336,6 +375,15 @@ int main()
                     exit(1);
                 }
                 // printf("%s",buf);
+                if(strcmp(buf,"-1")==0)
+                {
+                    printf("Folder can't be created\n");
+                    continue;
+                }
+                else
+                {
+                    printf("folder created successfully!!\n");
+                }
             }
             else if(strncmp(input,"delete_folder",strlen("delete_folder"))==0)
             {
@@ -344,6 +392,15 @@ int main()
                 {
                     perror("recv() error");
                     exit(1);
+                }
+                if(strcmp(buf,"-1")==0)
+                {
+                    printf("Folder can't be deleted\n");
+                    continue;
+                }
+                else
+                {
+                    printf("folder deleted successfully!!\n");
                 }
                 // printf("%s",buf);
             }
@@ -355,6 +412,15 @@ int main()
                     perror("recv() error");
                     exit(1);
                 }
+                if(strcmp(buf,"-1")==0)
+                {
+                    printf("Folder can't be copied\n");
+                    continue;
+                }
+                else
+                {
+                    printf("folder copied successfully!!\n");
+                }
                 // printf("%s",buf);
             }
             else
@@ -364,7 +430,7 @@ int main()
                 //     perror("recv() error");
                 //     exit(1);
                 // }
-                printf("Invalid action\n");
+                printf("Invalid action !!!\n");
             }
         
         }
