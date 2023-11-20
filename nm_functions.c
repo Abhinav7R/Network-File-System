@@ -493,78 +493,77 @@ int what_to_do(char *input, int nm_sock_for_client)
             port_2 = node_in_cache_2->storage_server_port_for_client;
             strcpy(ss_ip_4, node_in_cache_2->storage_server_ip);
         }
-
-        // Connect SS1 to NM and send details of SS2
-        int sock_1;
-        struct sockaddr_in serv_addr_1;
-        char buffer_1[1024];
-
-        sock_1 = socket(AF_INET, SOCK_STREAM, 0);
-        if (sock_1 == -1)
+        if (ss_num_1 == ss_num_2)
         {
-            perror("socket() error");
-            exit(1);
+            // send "input same"
+            // recv ack
+            // send ack to client
+
+            // Make a connection with the Storage Server
+            int sock1;
+            struct sockaddr_in serv_addr1;
+            char buffer1[BUF_SIZE];
+
+            // Create socket
+            sock1 = socket(AF_INET, SOCK_STREAM, 0);
+            if (sock1 == -1)
+            {
+                perror("socket() error");
+                exit(1);
+            }
+
+            memset(&serv_addr1, 0, sizeof(serv_addr1));
+            serv_addr1.sin_family = AF_INET;
+            serv_addr1.sin_addr.s_addr = inet_addr(ss_ip_1);
+            serv_addr1.sin_port = htons(ss_nm_port_1);
+
+            // Connect to Storage Server
+            if (connect(sock1, (struct sockaddr *)&serv_addr1, sizeof(serv_addr1)) == -1)
+            {
+                perror("connect() error");
+                exit(1);
+            }
+
+            // Send input and "same" to Storage Server
+            char combined_input[BUF_SIZE];
+            sprintf(combined_input, "%s same", input);
+            if (send(sock1, combined_input, strlen(combined_input), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+
+            // Receive acknowledgment from Storage Server
+            int ack;
+            char buffer_ack[BUF_SIZE];
+            if (recv(sock1, buffer_ack, sizeof(buffer_ack), 0) < 0)
+            {
+                perror("recv() error");
+                exit(1);
+            }
+
+            // Close the connection to Storage Server
+            close(sock1);
+
+            // Send the same acknowledgment to the client
+            if (send(nm_sock_for_client, buffer_ack, strlen(buffer_ack), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
         }
-
-        memset(&serv_addr_1, 0, sizeof(serv_addr_1));
-        serv_addr_1.sin_family = AF_INET;
-        serv_addr_1.sin_addr.s_addr = inet_addr(ss_ip_1);
-        serv_addr_1.sin_port = htons(ss_nm_port_1);
-
-        if (connect(sock_1, (struct sockaddr *)&serv_addr_1, sizeof(serv_addr_1)) == -1)
+        else
         {
-            perror("connect() error");
-            exit(1);
+
+            // connect nm to both SS1 and SS2
+            // recv from SS1 "create_file filepath"
+            // send above to SS2
+            // recv NUM_packets from SS1
+            // send NUM_packets to SS2
+            // while(NUM_packets--)
+            // recv from SS1 send to SS2
+            // send done ack to client
         }
-
-        char send_details_to_ss1[BUF_SIZE];
-        sprintf(send_details_to_ss1, "%s %s %d %d 1", input, ss_ip_2, ss_client_port_2, ss_nm_port_2);
-
-        if (send(sock_1, send_details_to_ss1, strlen(send_details_to_ss1), 0) < 0)
-        {
-            perror("send() error");
-            exit(1);
-        }
-
-        // Receive Acknowledgement from SS (waiting for Agrim)
-
-        close(sock_1);
-
-        // Connect SS2 to NM and send details of SS1
-        int sock_2;
-        struct sockaddr_in serv_addr_2;
-        char buffer_2[1024];
-
-        sock_2 = socket(AF_INET, SOCK_STREAM, 0);
-        if (sock_2 == -1)
-        {
-            perror("socket() error");
-            exit(1);
-        }
-
-        memset(&serv_addr_2, 0, sizeof(serv_addr_2));
-        serv_addr_2.sin_family = AF_INET;
-        serv_addr_2.sin_addr.s_addr = inet_addr(ss_ip_2);
-        serv_addr_2.sin_port = htons(ss_nm_port_2);
-
-        if (connect(sock_2, (struct sockaddr *)&serv_addr_2, sizeof(serv_addr_2)) == -1)
-        {
-            perror("connect() error");
-            exit(1);
-        }
-
-        char send_details_to_ss2[BUF_SIZE];
-        sprintf(send_details_to_ss2, "%s %s %d %d 1", input, ss_ip_1, ss_client_port_1, ss_nm_port_1);
-
-        if (send(sock_2, send_details_to_ss2, strlen(send_details_to_ss2), 0) < 0)
-        {
-            perror("send() error");
-            exit(1);
-        }
-
-        // Receive Acknowledgement from SS (waiting for Agrim)
-
-        close(sock_2);
     }
 
     else if (strncmp(input, "create_folder", strlen("create_folder")) == 0)
@@ -802,7 +801,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             }
             close(nm_sock_for_client);
         }
-        printf("Invalid action\n");
+        printf("Invaid Command\n");
         return 0;
     }
 }
