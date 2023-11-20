@@ -72,6 +72,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             strcpy(ss_ip, node_in_cache->storage_server_ip);
             // concatenate ip and port as a string separated by space
             sprintf(send_details_to_client, "%s %d", ss_ip, port);
+            printf("ss details sent to client: %s#\n", send_details_to_client);
             if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
             {
                 perror("send() error");
@@ -100,6 +101,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             if (ss_num == 0)
             {
                 // If file not found in trie, send -1 as acknowledgment to the client
+                printf("file not found!!!\n");
                 char send_details_to_client[BUF_SIZE];
                 sprintf(send_details_to_client, "%d", -1);
                 if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
@@ -141,6 +143,8 @@ int what_to_do(char *input, int nm_sock_for_client)
 
             // Concatenate IP and port as a string separated by space
             sprintf(send_details_to_client, "%s %d", ss_ip, port);
+            printf("ss details sent to the client: %s#\n", send_details_to_client);
+
             if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
             {
                 perror("send() error");
@@ -236,7 +240,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 exit(1);
             }
 
-            printf("Connected to Storage Server\n");
+            printf("Connected to Storage Server %d\n", ss_num);
 
             // Send input to Storage Server
             if (send(sock2, input, strlen(input), 0) < 0)
@@ -276,7 +280,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 // Insert into LRU
                 lru_node *new_lru_node = make_lru_node(file_path, ss_num, ss_client_port, ss_ip);
                 insert_at_front(new_lru_node, head);
-                printf("create file done\n");
+                printf("Create File done\n");
             }
             else
             {
@@ -350,7 +354,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 perror("connect() error");
                 exit(1);
             }
-            printf("Connected to Storage Server\n");
+            printf("Connected to Storage Server %d\n", ss_num);
 
             // Send input to Storage Server
             if (send(sock2, input, strlen(input), 0) < 0)
@@ -384,7 +388,7 @@ int what_to_do(char *input, int nm_sock_for_client)
 
             if (ack >= 0)
             {
-                printf("deleted file successfully!\n");
+                printf("Deleted File successfully!\n");
                 // Acknowledgment received successfully: delete the file path from the trie
                 delete_node(root, file_path);
 
@@ -439,6 +443,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             if (ss_num_1 == 0)
             {
                 // If file not found in trie, send -1 as acknowledgment to the client
+                printf("File path not found\n");
                 char send_details_to_client[BUF_SIZE];
                 sprintf(send_details_to_client, "%d", -1);
                 if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
@@ -476,6 +481,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             if (ss_num_2 == 0)
             {
                 // If file not found in trie, send -1 as acknowledgment to the client
+                printf("Folder path (Destination) not found\n");
                 char send_details_to_client_1[BUF_SIZE];
                 sprintf(send_details_to_client_1, "%d", -1);
                 if (send(nm_sock_for_client, send_details_to_client_1, strlen(send_details_to_client_1), 0) < 0)
@@ -528,10 +534,12 @@ int what_to_do(char *input, int nm_sock_for_client)
                 perror("connect() error");
                 exit(1);
             }
+            printf("Storage Server %d connected\n", ss_num_1);
 
             // Send input and "same" to Storage Server
             char combined_input[BUF_SIZE];
             sprintf(combined_input, "%s same", input);
+
             if (send(sock1, combined_input, strlen(combined_input), 0) < 0)
             {
                 perror("send() error");
@@ -599,6 +607,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 exit(1);
             }
 
+            printf("Connected to Storage Server %d and Storage Server %d\n", ss_num_1, ss_num_2);
             char input_to_ss1[BUF_SIZE];
             sprintf(input_to_ss1, "%s send", input);
             // Send input to Storage Server 1
@@ -615,7 +624,6 @@ int what_to_do(char *input, int nm_sock_for_client)
                 perror("send() error");
                 exit(1);
             }
-
 
             // Receive "create_file filepath" command from Storage Server 1
             char create_file_command_ss1[BUF_SIZE];
@@ -653,12 +661,12 @@ int what_to_do(char *input, int nm_sock_for_client)
 
             char acknowledge[BUF_SIZE];
             bzero(acknowledge, BUF_SIZE);
-            if(recv(sock_ss2, acknowledge, sizeof(acknowledge), 0) < 0)
+            if (recv(sock_ss2, acknowledge, sizeof(acknowledge), 0) < 0)
             {
                 perror("recv() error");
                 exit(1);
             }
-            if(send(sock_ss1, acknowledge, strlen(acknowledge), 0) < 0)
+            if (send(sock_ss1, acknowledge, strlen(acknowledge), 0) < 0)
             {
                 perror("send() error");
                 exit(1);
@@ -739,7 +747,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 perror("send() error");
                 exit(1);
             }
-
+            printf("Copy File Done\n");
             // Close connections
             // close(sock_ss1);
             // close(sock_ss2);
@@ -758,6 +766,8 @@ int what_to_do(char *input, int nm_sock_for_client)
         if (search(root, file_path) > 0)
         {
             // Send -1 acknowledgment to the client
+            printf("file already exists!!!\n");
+
             char send_details_to_client[BUF_SIZE];
             sprintf(send_details_to_client, "%d", -1);
             if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
@@ -781,6 +791,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             int ss_num = search(root, dir_path);
             if (ss_num == 0)
             {
+                printf("directory not found!!!\n");
                 char send_details_to_client[BUF_SIZE];
                 sprintf(send_details_to_client, "%d", -1);
                 if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
@@ -820,6 +831,8 @@ int what_to_do(char *input, int nm_sock_for_client)
                 exit(1);
             }
 
+            printf("Connected to Storage Server %d\n", ss_num);
+
             // Send input to Storage Server
             if (send(sock2, input, strlen(input), 0) < 0)
             {
@@ -857,10 +870,11 @@ int what_to_do(char *input, int nm_sock_for_client)
                 // Insert into LRU
                 lru_node *new_lru_node = make_lru_node(file_path, ss_num, ss_client_port, ss_ip);
                 insert_at_front(new_lru_node, head);
+                printf("Create Folder done\n");
             }
             else
             {
-                perror("[-]File delete error");
+                perror("[-]File creation error");
                 exit(1);
             }
 
@@ -879,6 +893,7 @@ int what_to_do(char *input, int nm_sock_for_client)
 
         if (ss_num <= 0)
         {
+            printf("file not found!!!\n");
             char send_details_to_client[BUF_SIZE];
             sprintf(send_details_to_client, "%d", -1);
             if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
@@ -919,6 +934,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 perror("connect() error");
                 exit(1);
             }
+            printf("Connected to Storage Server %d\n", ss_num);
 
             // Send input to Storage Server
             if (send(sock2, input, strlen(input), 0) < 0)
@@ -958,6 +974,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 // Search and delete from the LRU cache
                 lru_node *deleted_node = delete_lru_node(file_path, head);
                 free(deleted_node);
+                printf("Deleted Folder successfully!\n");
             }
             else
             {
