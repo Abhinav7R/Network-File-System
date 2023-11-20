@@ -6,6 +6,7 @@ void make_file(char* file, int nm_sockfd)
     char buffer_nm[1024];
     bzero(buffer_nm, 1024);
     // int fd = open(file, O_CREAT | O_RDWR, 0777);
+    // printf("%s\n", file);
     FILE* fd = fopen(file, "w+");
     if(fd != NULL)
     {
@@ -271,8 +272,13 @@ void recvFileFromSS(char* file, char* dest, int nm_sockfd)
         perror("[-]Recv error");
         return;
     }
+    // printf("SS2 %s\n", buffer_nm);
     if(strncmp(buffer_nm, "create_file", strlen("create_file")) == 0)
-        make_file(buffer_nm, nm_sockfd);
+    {
+        char* token = strtok(buffer_nm, " ");
+        token = strtok(NULL, " ");
+        make_file(token, nm_sockfd);
+    }
 
     bzero(buffer_nm, 1024);
     if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
@@ -327,11 +333,18 @@ void sendFileToSS(char* file, char* dest, int nm_sockfd)
     }
 
     char* new_file = (char*)malloc(sizeof(char) * (strlen(dest) + strlen(file) + 5));
+    bzero(new_file, strlen(dest) + strlen(file) + 5);
     sprintf(new_file, "%s/%s", dest, file_name);
     sprintf(buffer_nm, "create_file %s", new_file);
+    // printf("SS1 %s\n", buffer_nm);
     if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
     {
         perror("[-]Send error");
+        return;
+    }
+    if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+    {
+        perror("[-]Recv error");
         return;
     }
 

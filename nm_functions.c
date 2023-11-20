@@ -391,6 +391,8 @@ int what_to_do(char *input, int nm_sock_for_client)
                 perror("[-]File delete error");
                 exit(1);
             }
+
+            close(sock2);
         }
     }
     else if (strncmp(input, "copy_file", strlen("copy_file")) == 0)
@@ -610,6 +612,7 @@ int what_to_do(char *input, int nm_sock_for_client)
 
             // Receive "create_file filepath" command from Storage Server 1
             char create_file_command_ss1[BUF_SIZE];
+            bzero(create_file_command_ss1, BUF_SIZE);
             if (recv(sock_ss1, create_file_command_ss1, sizeof(create_file_command_ss1), 0) < 0)
             {
                 perror("recv() error");
@@ -634,7 +637,21 @@ int what_to_do(char *input, int nm_sock_for_client)
             insert_at_front(new_lru_node, head);
 
             // Send "create_file filepath" command to Storage Server 2
+            // printf("NM %s\n", create_file_command_ss1);
             if (send(sock_ss2, create_file_command_ss1, strlen(create_file_command_ss1), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+
+            char acknowledge[BUF_SIZE];
+            bzero(acknowledge, BUF_SIZE);
+            if(recv(sock_ss2, acknowledge, sizeof(acknowledge), 0) < 0)
+            {
+                perror("recv() error");
+                exit(1);
+            }
+            if(send(sock_ss1, acknowledge, strlen(acknowledge), 0) < 0)
             {
                 perror("send() error");
                 exit(1);
@@ -940,6 +957,8 @@ int what_to_do(char *input, int nm_sock_for_client)
                 perror("[-]File delete error");
                 exit(1);
             }
+
+            close(sock2);
         }
     }
     else if (strncmp(input, "copy_folder", strlen("copy_folder")) == 0)
