@@ -325,7 +325,7 @@ int main()
                     perror("recv() error");
                     exit(1);
                 }
-                // printf("%s",buf);
+                printf("%s",buf);
             }
             else if(strncmp(input,"create_folder",strlen("create_folder"))==0)
             {

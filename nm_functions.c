@@ -590,6 +590,24 @@ int what_to_do(char *input, int nm_sock_for_client)
                 exit(1);
             }
 
+            char input_to_ss1[BUF_SIZE];
+            sprintf(input_to_ss1, "%s send", input);
+            // Send input to Storage Server 1
+            if (send(sock_ss1, input_to_ss1, strlen(input_to_ss1), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+            char input_to_ss2[BUF_SIZE];
+            sprintf(input_to_ss2, "%s receive", input);
+            // Send input to Storage Server 1
+            if (send(sock_ss2, input_to_ss2, strlen(input_to_ss2), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+
+
             // Receive "create_file filepath" command from Storage Server 1
             char create_file_command_ss1[BUF_SIZE];
             if (recv(sock_ss1, create_file_command_ss1, sizeof(create_file_command_ss1), 0) < 0)
@@ -661,6 +679,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             {
                 // Receive data packets from Storage Server 1
                 char data_packet_ss1[BUF_SIZE];
+                bzero(data_packet_ss1, BUF_SIZE);
                 if (recv(sock_ss1, data_packet_ss1, sizeof(data_packet_ss1), 0) < 0)
                 {
                     perror("recv() error");
@@ -698,8 +717,8 @@ int what_to_do(char *input, int nm_sock_for_client)
             }
 
             // Close connections
-            close(sock_ss1);
-            close(sock_ss2);
+            // close(sock_ss1);
+            // close(sock_ss2);
         }
     }
 

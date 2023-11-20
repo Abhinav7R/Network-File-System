@@ -181,7 +181,7 @@ void* nm_handler_for_ops(void* arg)
             remove_nextline(port);
             if(strcmp(port, "same") == 0)
                 copyFile(source, dest, nm_sockfd);
-            else if(strcmp(port, "recieve") == 0)
+            else if(strcmp(port, "receive") == 0)
                 recvFileFromSS(source, dest, nm_sockfd);
             else if(strcmp(port, "send") == 0)
                 sendFileToSS(source, dest, nm_sockfd);
@@ -197,7 +197,7 @@ void* nm_handler_for_ops(void* arg)
             remove_nextline(dest);
             if(strcmp(dest, "same") == 0)
                 copyDir(source, dest, nm_sockfd);
-            else if(strcmp(dest, "recieve") == 0)
+            else if(strcmp(dest, "receive") == 0)
                 recvDirFromSS(source, dest, nm_sockfd);
             else if(strcmp(dest, "send") == 0)
                 sendDirToSS(source, dest, nm_sockfd);
