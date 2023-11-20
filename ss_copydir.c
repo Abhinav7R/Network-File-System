@@ -1,5 +1,78 @@
 #include "headers.h"
 
+void aurNahiHota(char* dir, char* dest, int nm_sockfd)
+{
+    copyDir(dir, dest, nm_sockfd);
+    int ack = 1;
+    char buffer_nm[1024];
+    bzero(buffer_nm, 1024);
+    sprintf(buffer_nm, "%d", ack);
+    if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+    {
+        perror("[-]Send error");
+        return;
+    }
+}
+
+void copyDir(char* dir, char* dest, int nm_sockfd)
+{
+    char buffer_nm[1024];
+    bzero(buffer_nm, 1024);
+    
+    DIR* dirp = opendir(dir);
+    if(dirp == NULL)
+    {
+        int ack = -1;
+        sprintf(buffer_nm, "%d", ack);
+        if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+        {
+            perror("[-]Send error");
+            return;
+        }
+        perror("[-]Directory open error");
+        exit(1);
+    }
+
+    char* new_dir = (char*)malloc(sizeof(char) * (strlen(dest) + strlen(dir) + 5));
+    sprintf(new_dir, "%s/%s", dest, dir);
+    if(strcmp(dir, new_dir) == 0)
+    {
+        int ack = -1;
+        sprintf(buffer_nm, "%d", ack);
+        if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+        {
+            perror("[-]Send error");
+            exit(1);
+        }
+        perror("[-]Folder copy error");
+        return;
+    }
+    mkdir(new_dir, 0777);
+
+    struct dirent* entry = readdir(dirp);
+    struct stat statbuff;
+    while(entry != NULL)
+    {
+        if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        {
+            entry = readdir(dirp);
+            continue;
+        }
+        char path[1024];
+        snprintf(path, sizeof(path), "%s/%s", dir, entry->d_name);
+        if(stat(path, &statbuff) < 0)
+        {
+            perror("[-]File stat error");
+            continue;
+        }
+        if(S_ISDIR(statbuff.st_mode))
+            copyDir(path, new_dir, nm_sockfd);
+        else
+            copyFile(path, new_dir, nm_sockfd);
+        entry = readdir(dirp);
+    }
+}
+
 void makeFolder(char* buffer_nm, int nm_sockfd)
 {
     char* token = strtok(buffer_nm, " ");
@@ -51,7 +124,7 @@ void fileBanao(char* buffer_nm, int nm_sockfd)
         }
         else if(strncmp(buffer_nm, "create_folder", strlen("create_folder")) == 0)
             makeFolder(buffer_nm, nm_sockfd);
-        else if(strnmcp(buffer_nm, "create_file", strlen("create_file")) == 0)
+        else if(strncmp(buffer_nm, "create_file", strlen("create_file")) == 0)
             fileBanao(buffer_nm, nm_sockfd);
 }
 
@@ -78,7 +151,7 @@ void recvDirFromSS(char* dir, char* dest, int nm_sockfd)
     }
     else if(strncmp(buffer_nm, "create_file", strlen("create_file")) == 0)
         fileBanao(buffer_nm, nm_sockfd);
-    else if(strnmcp(buffer_nm, "create_folder", strlen("create_folder")) == 0)
+    else if(strncmp(buffer_nm, "create_folder", strlen("create_folder")) == 0)
         makeFolder(buffer_nm, nm_sockfd);
 }
 
@@ -87,13 +160,13 @@ void filesender(char* file, char* dir, int nm_sockfd)
     char buffer[1024];
     bzero(buffer, 1024);
 
-    char file_name[1024];
+    char file_name[100];
     char temp[1024];
     strcpy(temp, file);
     char* token = strtok(temp, "/");
     while(token != NULL)
     {
-        bzero(file_name, 1024);
+        bzero(file_name, 100);
         strcpy(file_name, token);
         token = strtok(NULL, "/");
     }

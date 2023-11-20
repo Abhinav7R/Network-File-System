@@ -1,6 +1,8 @@
 #ifndef __SS_COPYDIR_H__
 #define __SS_COPYDIR_H__
 
+void aurNahiHota(char* dir, char* dest, int nm_sockfd);
+void copyDir(char* dir, char* dest, int nm_sockfd);
 void makeFolder(char* buffer_nm, int nm_sockfd);
 void fileBanao(char* buffer_nm, int nm_sockfd);
 void recvDirFromSS(char* dir, char* dest, int nm_sockfd);

@@ -196,11 +196,11 @@ void* nm_handler_for_ops(void* arg)
             char* dest = token;
             remove_nextline(dest);
             if(strcmp(dest, "same") == 0)
-                copyDir(source, dest, nm_sockfd);
+                aurNahiHota(source, dest, nm_sockfd);
             else if(strcmp(dest, "receive") == 0)
                 recvDirFromSS(source, dest, nm_sockfd);
             else if(strcmp(dest, "send") == 0)
-                sendDirToSS(source, dest, nm_sockfd);
+                recursivelySend(source, dest, nm_sockfd);
         }
         close(nm_sockfd);
     }
