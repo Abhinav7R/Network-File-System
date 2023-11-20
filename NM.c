@@ -19,6 +19,19 @@ char* nm_ip = "127.0.0.1";
 int count = 0;
 pthread_mutex_t count_lock=PTHREAD_MUTEX_INITIALIZER;
 
+//3 semaphores for critical sections of LRU tries and ss_info
+sem_t lru_lock;
+sem_t trie_lock;
+sem_t ss_info_lock;
+
+//initialise semaphores
+void init_semaphores()
+{
+    sem_init(&lru_lock,0,1);
+    sem_init(&trie_lock,0,1);
+    sem_init(&ss_info_lock,0,1);
+}
+
 int what_to_do(char* input, int nm_sock_for_client);
 
 typedef struct arguments_for_ss_thread
@@ -199,6 +212,11 @@ void* Main_Handle_Client(void* argument_for_client)
         pthread_create(&client_thread_id[i], NULL, Handle_Client, (void*)&arguments_for_each_clients[i]); 
     }
 
+    for(int i=0;i<NUM_CLIENTS;i++)
+    {
+        pthread_join(client_thread_id[i], NULL);
+    }
+
 }
 
 int main()
@@ -208,6 +226,9 @@ int main()
     root = init();
     // Initialize LRU Cache
     head = init_lru();
+
+    //initialise locks
+    init_semaphores();
 
     int server_sock;
     // int ss_as_client_sock;

@@ -250,6 +250,7 @@ int main()
                         perror("send() error");
                         exit(1);
                     }
+                    
                     //if 2 enters then break
                     if(strcmp(data,"\n")==0)
                     {

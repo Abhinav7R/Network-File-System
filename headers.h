@@ -14,6 +14,7 @@
 #include <pthread.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <semaphore.h>
 
 #include "tries.h"
 #include "lru.h"

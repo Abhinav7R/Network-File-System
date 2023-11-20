@@ -1,16 +1,24 @@
 #include "lru.h"
+#include "headers.h"
+
+extern sem_t lru_lock;
 
 lru_head* head;
 
 lru_node* find_and_return(char* filepath, lru_head* head)
 {
+    sem_wait(&lru_lock);
     lru_node* temp = head->front;
     while(temp != NULL)
     {
         if(strcmp(temp->filepath, filepath) == 0)
+        {
+            sem_post(&lru_lock);
             return temp;
+        }
         temp = temp->next;
     }
+    sem_post(&lru_lock);
     return NULL;
 }
 
@@ -25,6 +33,7 @@ lru_head* init_lru()
 
 lru_node* make_lru_node(char* filepath, int storage_server_num, int storage_server_port_for_client, char* storage_server_ip)
 {
+    sem_wait(&lru_lock);
     lru_node* node = (lru_node*)malloc(sizeof(lru_node));
     node->filepath = (char*)calloc(sizeof(char), strlen(filepath));
     strcpy(node->filepath, filepath);
@@ -34,31 +43,43 @@ lru_node* make_lru_node(char* filepath, int storage_server_num, int storage_serv
     strcpy(node->storage_server_ip, storage_server_ip);
     node->next = NULL;
     node->prev = NULL;
+    sem_post(&lru_lock);
     return node;
 }
 
 void delete_last_node(lru_head* head)
 {
+    sem_wait(&lru_lock);
     if(head->num_nodes == 0)
+    {
+        sem_post(&lru_lock);
         return;
+    }
     if(head->num_nodes == 1)
     {
         head->front = NULL;
         head->rear = NULL;
         head->num_nodes--;
+        sem_post(&lru_lock);
         return;
     }
     lru_node* temp = head->rear;
     head->rear = head->rear->prev;
     head->rear->next = NULL;
     head->num_nodes--;
+    sem_post(&lru_lock);
+    return;
 }
 
 void insert_at_front(lru_node* node, lru_head* head)
 {
+    sem_wait(&lru_lock);
     if(head->num_nodes == LRU_CACHE_SIZE)
     {
-        delete_last_node(head);
+        lru_node* temp = head->rear;
+        head->rear = head->rear->prev;
+        head->rear->next = NULL;
+        head->num_nodes--;
     }
 
     if(head->num_nodes == 0)
@@ -66,6 +87,7 @@ void insert_at_front(lru_node* node, lru_head* head)
         head->front = node;
         head->rear = node;
         head->num_nodes++;
+        sem_post(&lru_lock);
         return;
     }
     node->next = head->front;
@@ -73,13 +95,17 @@ void insert_at_front(lru_node* node, lru_head* head)
     node->next->prev = node;
     head->front = node;
     head->num_nodes++;
+    sem_post(&lru_lock);
+    return;
 }
 
 lru_node* delete_lru_node(char* filepath, lru_head* head)
 {
+    sem_wait(&lru_lock);
     lru_node* return_node = NULL;
     if(head->num_nodes == 0)
     {
+        sem_post(&lru_lock);
         return NULL;
     }
     if(head->num_nodes == 1)
@@ -88,6 +114,7 @@ lru_node* delete_lru_node(char* filepath, lru_head* head)
         head->front = NULL;
         head->rear = NULL;
         head->num_nodes--;
+        sem_post(&lru_lock);
         return return_node;
     }
     if(strcmp(head->front->filepath, filepath) == 0)
@@ -96,6 +123,7 @@ lru_node* delete_lru_node(char* filepath, lru_head* head)
         head->front = head->front->next;
         head->front->prev = NULL;
         head->num_nodes--;
+        sem_post(&lru_lock);
         return return_node;
     }
     lru_node* temp = head->front;
@@ -108,13 +136,17 @@ lru_node* delete_lru_node(char* filepath, lru_head* head)
             if(temp->next != NULL)
                 temp->next->prev = temp;
             head->num_nodes--;
+            sem_post(&lru_lock);
             return return_node;
         }
         temp = temp->next;
     }
+    sem_post(&lru_lock);
     return NULL;
 
 }
+
+//lock handling lite
 
 void shift_node_to_front(char* filepath, lru_head* head)
 {

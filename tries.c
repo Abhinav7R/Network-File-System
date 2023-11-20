@@ -1,4 +1,7 @@
 #include "tries.h"
+#include "headers.h"
+
+extern sem_t trie_lock;
 
 trie* root;
 
@@ -19,6 +22,7 @@ trie* init()
 
 void insert(trie* root, char* str, int server_num)
 {
+    sem_wait(&trie_lock);
     trie* p = root;
     for (int i = 0; i < strlen(str); i++)
     {
@@ -36,12 +40,14 @@ void insert(trie* root, char* str, int server_num)
     }
     p->is_end = server_num;
     printf("inserted %s\n",str);
+    sem_post(&trie_lock);
 }
 
 //search in trie
 
 int search(trie* root, char* str)
 {
+    sem_wait(&trie_lock);
     if(str[strlen(str)-1] == '\n')
         str[strlen(str)-1] = '\0';
     trie* p = root;
@@ -50,14 +56,17 @@ int search(trie* root, char* str)
         
         if (p->next[str[i]] == NULL)
         {
+            sem_post(&trie_lock);
             return 0;
         }
         p = p->next[str[i]];
     }
     if (p->is_end > 0)
     {
+        sem_post(&trie_lock);
         return p->is_end;
     }
+    sem_post(&trie_lock);
     return 0;
 }
 
@@ -65,6 +74,7 @@ int search(trie* root, char* str)
 
 void delete_node(trie* root, char* str)
 {
+    sem_wait(&trie_lock);
     trie* p = root;
     for (int i = 0; i < strlen(str); i++)
     {
@@ -75,6 +85,7 @@ void delete_node(trie* root, char* str)
         p = p->next[str[i]];
     }
     p->is_end = 0;
+    sem_post(&trie_lock);
 }
 
 //print all strings in trie in lexicographical order
@@ -99,7 +110,9 @@ void print_trie(trie* root, char* prefix)
 
 void print_all_strings_in_trie(trie* root)
 {
+    sem_wait(&trie_lock);
     print_trie(root,"");
+    sem_post(&trie_lock);
 }
 
 // int main()
