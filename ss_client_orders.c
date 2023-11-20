@@ -55,6 +55,7 @@ void write_file(char* file, int client_sockfd)
 {
     char buffer_client[1024];
     
+    FILE* fd = fopen(file, "a");
     while(1)
     {
         bzero(buffer_client, 1024);
@@ -68,14 +69,14 @@ void write_file(char* file, int client_sockfd)
         if(strcmp(buffer_client, "\n") == 0)
             break;
 
-        FILE* fd = fopen(file, "a");
+        // FILE* fd = fopen(file, "a");
         if(fd == NULL)
         {
             perror("[-]File open error");
             exit(1);
         }    
         fprintf(fd, "%s", buffer_client);
-        fclose(fd);
+        // fclose(fd);
 
         // bzero(buffer_client, 1024);
         // strcpy(buffer_client, "OK");
@@ -85,6 +86,8 @@ void write_file(char* file, int client_sockfd)
         //     exit(1);
         // }
     }
+    fclose(fd);
+
 }
 
 void retrieve_info(char* file, int client_sockfd)
