@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "readwritelock.h"
 
 //tries in c for all ascii characters
 
@@ -11,6 +12,7 @@ typedef struct node
 {
     int is_end;     //also the same as server_num
     struct node *next[128];
+    rwlock_t rwlock;
 }trie;
 
 trie* init();

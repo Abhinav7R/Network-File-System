@@ -39,6 +39,7 @@ void insert(trie* root, char* str, int server_num)
         p = p->next[str[i]];
     }
     p->is_end = server_num;
+    init_rwlock(&(p->rwlock));
     printf("inserted %s\n",str);
     sem_post(&trie_lock);
 }

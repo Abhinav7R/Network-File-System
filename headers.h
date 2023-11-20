@@ -21,6 +21,8 @@
 #include "ss_info.h"
 #include "ss_nm_orders.h"
 #include "ss_client_orders.h"
+#include "readwritelock.h"
+#include "ss_copydir.h"
 
 #define BUF_SIZE 1024
 
