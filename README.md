@@ -4,6 +4,10 @@ Team members: Abhinav Yash Agrim
 OK
 
 
-error codes
+error codes : atleast wrong files and folders print karo for client ss and nm 
 pastevents
-concurrency
+concurrency done 
+copy file/dir
+redundancy
+
+lru caching in read write retrieve nm_functions.c what_to_do
