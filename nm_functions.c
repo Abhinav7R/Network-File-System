@@ -54,7 +54,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 char port_as_string[100];
                 sprintf(port_as_string, " %d", port);
                 strcat(send_details_to_client, port_as_string);
-
+                
                 printf("ss details sent to client: %s#\n", send_details_to_client);
                 if (send(nm_sock_for_client, send_details_to_client, strlen(send_details_to_client), 0) < 0)
                 {
