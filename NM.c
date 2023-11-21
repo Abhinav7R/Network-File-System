@@ -56,6 +56,117 @@ typedef struct arguments_for_individual_client_thread
 ss_backups ss_ke_backups[NUM_STORAGE_SERVERS];
 int available_ss[NUM_STORAGE_SERVERS];
 
+void copy_backup_folder(int sock_ss1, int sock_ss2)
+{
+    char bufferFor1[BUF_SIZE], bufferFor2[BUF_SIZE];
+    while(1)
+    {
+        bzero(bufferFor1, BUF_SIZE);
+        if(recv(sock_ss1, bufferFor1, sizeof(bufferFor1), 0) < 0)
+        {
+            perror("recv() error");
+            exit(1);
+        }
+        if(strcmp(bufferFor1, "\n") == 0)
+        {
+            if(send(sock_ss2, bufferFor1, sizeof(bufferFor1), 0) < 0)
+            {
+                perror("send() error");
+                exit(1);
+            }
+            break;
+        }
+        
+        if(send(sock_ss2, bufferFor1, strlen(bufferFor1), 0) < 0)
+        {
+            perror("send() error");
+            exit(1);
+        }
+        // printf("NM %s\n", bufferFor1);
+
+        //acknowledgements
+        if(recv(sock_ss2, bufferFor2, sizeof(bufferFor2), 0) < 0)
+        {
+            perror("recv() error");
+            exit(1);
+        }
+        if(send(sock_ss1, bufferFor2, strlen(bufferFor2), 0) < 0)
+        {
+            perror("send() error");
+            exit(1);
+        }
+    }
+    char ack_ss2_full[BUF_SIZE];
+    bzero(ack_ss2_full, BUF_SIZE);
+    if(recv(sock_ss2, ack_ss2_full, sizeof(ack_ss2_full), 0) < 0)
+    {
+        perror("recv() error");
+        exit(1);
+    }
+    // printf("aa gaya\n");
+    //Send ack to SS1
+    if(send(sock_ss1, ack_ss2_full, strlen(ack_ss2_full), 0) < 0)
+    {
+        perror("send() error");
+        exit(1);
+    }
+}
+
+int connect_to_ss_and_do(int ss_num, char* input)
+{
+    int ss_nm_port = array_of_ss_info[ss_num].ss_nm_port;
+    char *ss_ip = array_of_ss_info[ss_num].ss_ip;
+
+    // Make a connection with the Storage Server
+    int sock2;
+    struct sockaddr_in serv_addr2;
+    char buffer[1024];
+
+    // Create socket
+    sock2 = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock2 == -1)
+    {
+        perror("socket() error");
+        exit(1);
+    }
+
+    memset(&serv_addr2, 0, sizeof(serv_addr2));
+    serv_addr2.sin_family = AF_INET;
+    serv_addr2.sin_addr.s_addr = inet_addr(ss_ip);
+    serv_addr2.sin_port = htons(ss_nm_port);
+
+    // Connect to Storage Server
+    if (connect(sock2, (struct sockaddr *)&serv_addr2, sizeof(serv_addr2)) == -1)
+    {
+        perror("connect() error");
+        exit(1);
+    }
+
+    printf("Connected to Storage Server %d\n", ss_num);
+
+    // Send input to Storage Server
+    if (send(sock2, input, strlen(input), 0) < 0)
+    {
+        perror("send() error");
+        exit(1);
+    }
+
+    // Receive Ack from Storage Server
+    int ack;
+    char buffer_ack[BUF_SIZE];
+    if (recv(sock2, buffer_ack, sizeof(buffer_ack), 0) < 0)
+    {
+        perror("recv() error");
+        exit(1);
+    }
+
+    // Convert received acknowledgment to an integer
+    sscanf(buffer_ack, "%d", &ack);
+
+    // close(sock2);
+    return sock2;
+}
+
 void backup_for_3_ss()
 {
     //back up for 3 ss
@@ -64,15 +175,96 @@ void backup_for_3_ss()
     ss_ke_backups[1].backup_ss2=3;
     //agrim
     //create a folder called ss1_backup in ss2 and ss3
+    char input[1024];
+    sprintf(input,"create_folder ./ss%d/ss%d_backup", 2, 1);
+    int sock = connect_to_ss_and_do(2,input);
+    close(sock);
+    bzero(input,1024);
+    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup send", 1, 2, 1);
+    int sock1 = connect_to_ss_and_do(1,input);
+    bzero(input,1024);
+    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup receive", 1, 2, 1);
+    int sock2 = connect_to_ss_and_do(2,input);
+    copy_backup_folder(sock1, sock2);
+    close(sock1);
+    close(sock2);
+
+    bzero(input,1024);
+    sprintf(input,"create_folder ./ss%d/ss%d_backup", 3, 1);
+    sock = connect_to_ss_and_do(3,input);
+    close(sock);
+    bzero(input,1024);
+    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup send", 1, 3, 1);
+    sock1 = connect_to_ss_and_do(1,input);
+    bzero(input,1024);
+    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup receive", 1, 3, 1);
+    sock2 = connect_to_ss_and_do(3,input);
+    copy_backup_folder(sock1, sock2);
+    close(sock1);
+    close(sock2);
     //copy folder ss1 to ./ss2/ss1_backup and ./ss3/ss1_backup
     //ss2
     ss_ke_backups[2].backup_ss1=1;
     ss_ke_backups[2].backup_ss2=3;
     //agrim
+    bzero(input,1024);
+    sprintf(input,"create_folder ./ss%d/ss%d_backup", 1, 2);
+    sock = connect_to_ss_and_do(1,input);
+    close(sock);
+    bzero(input,1024);
+    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup send", 2, 1, 2);
+    sock1 = connect_to_ss_and_do(2,input);
+    bzero(input,1024);
+    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup receive", 2, 1, 2);
+    sock2 = connect_to_ss_and_do(1,input);
+    copy_backup_folder(sock1, sock2);
+    close(sock1);
+    close(sock2);
+
+    bzero(input,1024);
+    sprintf(input,"create_folder ./ss%d/ss%d_backup", 3, 2);
+    sock = connect_to_ss_and_do(3,input);
+    close(sock);
+    bzero(input,1024);
+    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup send", 2, 3, 2);
+    sock1 = connect_to_ss_and_do(2,input);
+    bzero(input,1024);
+    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup receive", 2, 3, 2);
+    sock2 = connect_to_ss_and_do(3,input);
+    copy_backup_folder(sock1, sock2);
+    close(sock1);
+    close(sock2);
     //ss3
     ss_ke_backups[3].backup_ss1=1;
     ss_ke_backups[3].backup_ss2=2;
     //agrim
+    bzero(input,1024);
+    sprintf(input,"create_folder ./ss%d/ss%d_backup", 1, 3);
+    sock = connect_to_ss_and_do(1,input);
+    close(sock);
+    bzero(input, 1024);
+    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup send", 3, 1, 3);
+    sock1 = connect_to_ss_and_do(3,input);
+    bzero(input,1024);
+    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup receive", 3, 1, 3);
+    sock2 = connect_to_ss_and_do(1,input);
+    copy_backup_folder(sock1, sock2);
+    close(sock1);
+    close(sock2);
+
+    bzero(input,1024);
+    sprintf(input,"create_folder ./ss%d/ss%d_backup", 2, 3);
+    sock = connect_to_ss_and_do(2,input);
+    close(sock);
+    bzero(input,1024);
+    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup send", 3, 2, 3);
+    sock1 = connect_to_ss_and_do(3,input);
+    bzero(input,1024);
+    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup receive", 3, 2, 3);
+    sock2 = connect_to_ss_and_do(2,input);
+    copy_backup_folder(sock1, sock2);
+    close(sock1);
+    close(sock2);
 }
 
 void* backup_for_more_than_3(int ss_num)
@@ -95,6 +287,33 @@ void* backup_for_more_than_3(int ss_num)
     }
     //agrim
     //create a folder called ss1_backup in ss2 and ss3
+    char input[1024];
+    sprintf(input,"create_folder ./ss%d/ss%d_backup", ss_ke_backups[ss_num].backup_ss1, ss_num);
+    int sock = connect_to_ss_and_do(ss_ke_backups[ss_num].backup_ss1,input);
+    close(sock);
+    bzero(input,1024);
+    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup send", ss_num, ss_ke_backups[ss_num].backup_ss1, ss_num);
+    int sock1 = connect_to_ss_and_do(ss_num,input);
+    bzero(input,1024);
+    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup receive", ss_num, ss_ke_backups[ss_num].backup_ss1, ss_num);
+    int sock2 = connect_to_ss_and_do(ss_ke_backups[ss_num].backup_ss1,input);
+    bzero(input,1024);
+    copy_backup_folder(sock1, sock2);
+    close(sock1);
+    close(sock2);
+
+    sprintf(input,"create_folder ./ss%d/ss%d_backup", ss_ke_backups[ss_num].backup_ss2, ss_num);
+    sock = connect_to_ss_and_do(ss_ke_backups[ss_num].backup_ss2,input);
+    close(sock);
+    bzero(input,1024);
+    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup send", ss_num, ss_ke_backups[ss_num].backup_ss2, ss_num);
+    sock1 = connect_to_ss_and_do(ss_num,input);
+    bzero(input,1024);
+    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup receive", ss_num, ss_ke_backups[ss_num].backup_ss2, ss_num);
+    sock2 = connect_to_ss_and_do(ss_ke_backups[ss_num].backup_ss2,input);
+    copy_backup_folder(sock1, sock2);
+    close(sock1);
+    close(sock2);
     //copy folder ss1 to ./ss2/ss1_backup and ./ss3/ss1_backup
 }
 
@@ -124,17 +343,6 @@ void* Handle_SS(void* arguments)
         pthread_mutex_unlock(&count_lock);
 
         available_ss[count]=AVAILABLE;
-
-        if(count==3)
-        {
-            backup_for_3_ss();
-        }
-
-        //assume that atleast 2 servers would be available for backup at any time
-        else if(count>3)
-        {
-            backup_for_more_than_3(count);
-        }
 
         addr_size = sizeof(ss_as_client_addr);
         ss_as_client_sock = accept(server_sock, (struct sockaddr *)&ss_as_client_addr, &addr_size);
@@ -196,6 +404,17 @@ void* Handle_SS(void* arguments)
         {
             perror("[-]Send error");
             exit(1);
+        }
+
+        if(count==3)
+        {
+            backup_for_3_ss();
+        }
+
+        //assume that atleast 2 servers would be available for backup at any time
+        else if(count>3)
+        {
+            backup_for_more_than_3(count);
         }
 
         close(ss_as_client_sock);

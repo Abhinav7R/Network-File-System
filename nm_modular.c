@@ -64,6 +64,10 @@ int read_or_retrieve_file(char *input, int nm_sock_for_client)
                 }
                 release_readlock(rwlock);
                 printf("read lock released\n");
+
+                //Insert the file into the LRU cache since it's recently used
+                lru_node *new_lru_node = make_lru_node(filename, ss_num, port, array_of_ss_info[ss_num].ss_ip);
+                insert_at_front(new_lru_node, head);
                 return 1;
             }
         }
@@ -94,6 +98,9 @@ int read_or_retrieve_file(char *input, int nm_sock_for_client)
             }
             release_readlock(rwlock);
             printf("read lock released\n");
+
+            //Shift the node to the front of the LRU cache
+            shift_node_to_front(filename, head);
         }
 }
 
@@ -147,11 +154,28 @@ void backup_create_file(int ss_num,int backup_num,char* input)
     // manipulate input 
     // you have create_file ./ss(ss_num)/A/b.txt
     // you need to make it as ./ss(backup_num)/ss(ss_num)_backup/A/b.txt
-    //eg: ./ss2/A/b.txt
-    // will become ./ss3/ss2_backup/A/b.txt
-
+    //eg: create_file ./ss2/A/b.txt
+    // will become create_file ./ss3/ss2_backup/A/b.txt
     char input2[1024];
-
+    char* temp = input;
+    char* token = strtok(temp, "/");
+    strcpy(input2,token);
+    strcat(input2,"/ss");
+    char* num_string = (char*)malloc(10*sizeof(char));
+    sprintf(num_string,"%d",backup_num);
+    strcat(input2,num_string);
+    strcat(input2, "/");
+    token = strtok(NULL, "/");
+    strcat(input2,token);
+    strcat(input2, "_backup");
+    token = strtok(NULL, "/");
+    while(token != NULL)
+    {
+        strcat(input2,"/");
+        strcat(input2,token);
+        token = strtok(NULL, "/");
+    }
+    printf("Sending to backup server: %s\n",input2);
 
     // Send input to Storage Server
     if (send(sock2, input2, strlen(input2), 0) < 0)
