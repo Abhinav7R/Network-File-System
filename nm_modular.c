@@ -155,9 +155,11 @@ void backup_create_file(int ss_num,int backup_num,char* input)
     // you have create_file ./ss(ss_num)/A/b.txt
     // you need to make it as ./ss(backup_num)/ss(ss_num)_backup/A/b.txt
     //eg: create_file ./ss2/A/b.txt
-    // will become create_file ./ss3/ss2_backup/A/b.txt
+    // will become create_file ./ss3/ss2_backup/ss2/A/b.txt
     char input2[1024];
-    char* temp = input;
+    bzero(input2, 1024);
+    char temp[1024];
+    strcpy(temp, input);
     char* token = strtok(temp, "/");
     strcpy(input2,token);
     strcat(input2,"/ss");
@@ -168,6 +170,8 @@ void backup_create_file(int ss_num,int backup_num,char* input)
     token = strtok(NULL, "/");
     strcat(input2,token);
     strcat(input2, "_backup");
+    strcat(input2, "/");
+    strcat(input2, token);
     token = strtok(NULL, "/");
     while(token != NULL)
     {
@@ -195,7 +199,7 @@ void backup_create_file(int ss_num,int backup_num,char* input)
 
     // Convert received acknowledgment to an integer
     sscanf(buffer_ack, "%d", &ack);
-
+    close(sock2);
     close(sock2);
 }
 
@@ -203,8 +207,8 @@ void backup_create_file(int ss_num,int backup_num,char* input)
 void do_backup_file(int ss_num, char* input)
 {
     pthread_t create_file_thread;
-    backup_file_struct bb;
-    bb.ss_num = ss_num;
-    bb.input = input;
-    pthread_create(&create_file_thread,NULL,main_backup_file,(void*)&bb);
+    backup_file_struct* bb = (backup_file_struct*) malloc(sizeof(backup_file_struct));
+    bb->ss_num = ss_num;
+    bb->input = input;
+    pthread_create(&create_file_thread,NULL,main_backup_file,(void*)bb);
 }

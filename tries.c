@@ -1,9 +1,9 @@
 #include "tries.h"
 #include "headers.h"
 
-extern sem_t trie_lock;
+sem_t trie_lock;
 
-trie* root;
+extern trie* root;
 
 //initialise trie
 
@@ -48,7 +48,7 @@ void insert(trie* root, char* str, int server_num)
 
 int search(trie* root, char* str)
 {
-    sem_wait(&trie_lock);
+    // sem_wait(&trie_lock);
     if(str[strlen(str)-1] == '\n')
         str[strlen(str)-1] = '\0';
     trie* p = root;
@@ -57,17 +57,17 @@ int search(trie* root, char* str)
         
         if (p->next[str[i]] == NULL)
         {
-            sem_post(&trie_lock);
+            // sem_post(&trie_lock);
             return 0;
         }
         p = p->next[str[i]];
     }
     if (p->is_end > 0)
     {
-        sem_post(&trie_lock);
+        // sem_post(&trie_lock);
         return p->is_end;
     }
-    sem_post(&trie_lock);
+    // sem_post(&trie_lock);
     return 0;
 }
 
@@ -136,9 +136,9 @@ void print_trie(trie* root, char* prefix)
 
 void print_all_strings_in_trie(trie* root)
 {
-    sem_wait(&trie_lock);
+    // sem_wait(&trie_lock);
     print_trie(root,"");
-    sem_post(&trie_lock);
+    // sem_post(&trie_lock);
 }
 
 // int main()

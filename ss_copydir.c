@@ -128,7 +128,7 @@ void fileBanao(char* buffer_nm_2, int nm_sockfd)
         exit(1);
     }
     // printf("[+]Receiving %s\n", buffer_nm);
-    while((strncmp(buffer_nm, "create_file", strlen("create_file")) != 0) && strncmp(buffer_nm, "create_folder", strlen("create_folder")) != 0 && (strcmp(buffer_nm, "\n") != 0))
+    while((strncmp(buffer_nm, "create_file", strlen("create_file")) != 0) && strncmp(buffer_nm, "create_folder", strlen("create_folder")) != 0 && (strcmp(buffer_nm, "__DONE__") != 0))
     {
         fprintf(fd, "%s", buffer_nm);
         bzero(buffer_nm, 1024);
@@ -147,7 +147,7 @@ void fileBanao(char* buffer_nm_2, int nm_sockfd)
     }
     fclose(fd);
     // printf("Finally\n");
-    if(strcmp(buffer_nm, "\n") == 0)
+    if(strcmp(buffer_nm, "__DONE__") == 0)
     {
         bzero(buffer_nm, 1024);
         strcpy(buffer_nm, "1");
@@ -175,7 +175,7 @@ void recvDirFromSS(int nm_sockfd)
         perror("[-]Recv error");
         exit(1);
     }
-    if(strcmp(buffer_nm, "\n") == 0)
+    if(strcmp(buffer_nm, "__DONE__") == 0)
     {
         bzero(buffer_nm, 1024);
         strcpy(buffer_nm, "1");
@@ -321,7 +321,7 @@ void recursivelySend(char* dir, char* dest, int nm_sockfd)
     sendDirToSS(dir, dest, nm_sockfd);
     char buffer_nm[1024];
     bzero(buffer_nm, 1024);
-    strcpy(buffer_nm, "\n");
+    strcpy(buffer_nm, "__DONE__");
     // printf("END1\n");
     if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
     {
