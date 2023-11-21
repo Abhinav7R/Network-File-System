@@ -53,6 +53,51 @@ typedef struct arguments_for_individual_client_thread
     struct sockaddr_in client_addr;
 }arguments_for_individual_client_thread;
 
+ss_backups ss_ke_backups[NUM_STORAGE_SERVERS];
+int available_ss[NUM_STORAGE_SERVERS];
+
+void backup_for_3_ss()
+{
+    //back up for 3 ss
+    //ss1
+    ss_ke_backups[1].backup_ss1=2;
+    ss_ke_backups[1].backup_ss2=3;
+    //agrim
+    //create a folder called ss1_backup in ss2 and ss3
+    //copy folder ss1 to ./ss2/ss1_backup and ./ss3/ss1_backup
+    //ss2
+    ss_ke_backups[2].backup_ss1=1;
+    ss_ke_backups[2].backup_ss2=3;
+    //agrim
+    //ss3
+    ss_ke_backups[3].backup_ss1=1;
+    ss_ke_backups[3].backup_ss2=2;
+    //agrim
+}
+
+void* backup_for_more_than_3(int ss_num)
+{
+    for(int i=ss_num;i>0;i--)
+    {
+        if(available_ss[i]==AVAILABLE)
+        {
+            ss_ke_backups[ss_num].backup_ss1=i;
+            break;
+        }
+    }
+    for(int i=ss_num;i>0;i--)
+    {
+        if(available_ss[i]==AVAILABLE && i!=ss_ke_backups[ss_num].backup_ss1)
+        {
+            ss_ke_backups[ss_num].backup_ss2=i;
+            break;
+        }
+    }
+    //agrim
+    //create a folder called ss1_backup in ss2 and ss3
+    //copy folder ss1 to ./ss2/ss1_backup and ./ss3/ss1_backup
+}
+
 void* Handle_SS(void* arguments)
 {
     arguments_for_ss_thread* args = (arguments_for_ss_thread*)arguments;
@@ -63,12 +108,33 @@ void* Handle_SS(void* arguments)
     struct sockaddr_in ss_as_client_addr;
     socklen_t addr_size;
     char B[1024];
+
+    //initialise ss_ke_backups and available_ss
+    for(int i=0;i<NUM_STORAGE_SERVERS;i++)
+    {
+        ss_ke_backups[i].backup_ss1=-1;
+        ss_ke_backups[i].backup_ss2=-1;
+        available_ss[i]=NOT_AVAILABLE;
+    }
     
     while (count < NUM_STORAGE_SERVERS)
     {
         pthread_mutex_lock(&count_lock);
         count++;
         pthread_mutex_unlock(&count_lock);
+
+        available_ss[count]=AVAILABLE;
+
+        if(count==3)
+        {
+            backup_for_3_ss();
+        }
+
+        //assume that atleast 2 servers would be available for backup at any time
+        else if(count>3)
+        {
+            backup_for_more_than_3(count);
+        }
 
         addr_size = sizeof(ss_as_client_addr);
         ss_as_client_sock = accept(server_sock, (struct sockaddr *)&ss_as_client_addr, &addr_size);

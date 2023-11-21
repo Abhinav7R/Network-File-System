@@ -26,4 +26,13 @@
 
 #define BUF_SIZE 1024
 
+typedef struct ss_backups
+{
+    int backup_ss1;
+    int backup_ss2;
+}ss_backups;
+
+#define AVAILABLE 1
+#define NOT_AVAILABLE 0
+
 #endif
