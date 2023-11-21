@@ -4,6 +4,8 @@
 sem_t trie_lock;
 
 extern trie* root;
+extern char result_strings[MAX_STRINGS][MAX_STRING_LENGTH];
+extern int result_count;
 
 //initialise trie
 
@@ -141,26 +143,81 @@ void print_all_strings_in_trie(trie* root)
     // sem_post(&trie_lock);
 }
 
+void collect_strings_with_prefix(trie *node, char *current_prefix)
+{
+    if (node == NULL)
+        return;
+
+    if (node->is_end > 0)
+    {
+        // Copy the string to the 2D array
+        strcpy(result_strings[result_count], current_prefix);
+        result_count++;
+    }
+
+    // Recursively traverse the children of the current node
+    for (int i = 0; i < 128; i++)
+    {
+        if (node->next[i] != NULL)
+        {
+            char *temp = (char *)malloc(sizeof(char) * (strlen(current_prefix) + 2));
+            strcpy(temp, current_prefix);
+            temp[strlen(current_prefix)] = i;
+            temp[strlen(current_prefix) + 1] = '\0';
+
+            collect_strings_with_prefix(node->next[i], temp);
+        }
+    }
+}
+
+void search_and_insert(trie *root, char *prefix)
+{
+    trie *p = root;
+    int len = strlen(prefix);
+
+    for (int i = 0; i < len; i++)
+    {
+        if (p->next[prefix[i]] == NULL)
+        {
+            sem_post(&trie_lock);
+            return;
+        }
+        p = p->next[prefix[i]];
+    }
+
+    collect_strings_with_prefix(p, prefix);
+}
+
+void print_result_strings()
+{
+    for (int i = 0; i < result_count; i++)
+        printf("%s\n", result_strings[i]);
+}
+
 // int main()
 // {
 //     int n;
-//     scanf("%d",&n);
-//     trie* root = init();
+//     char input[MAX_STRING_LENGTH];
+
+//     root = init();
+
+//     printf("Enter the number of strings to insert: ");
+//     scanf("%d", &n);
+
 //     for (int i = 0; i < n; i++)
 //     {
-//         char str[100];
-//         scanf("%s",str);
-//         insert(root,str,i+1);
-//         int ss_num=search(root,str);
-//         if(ss_num>0)
-//         {
-//             printf("found %s %d\n",str,ss_num);
-//         }
-//         else
-//         {
-//             printf("not found %s\n",str);
-//         }
-//     } 
-//     print_all_strings_in_trie(root);
+//         printf("Enter string %d: ", i + 1);
+//         scanf("%s", input);
+//         insert(root, input, i + 1);
+//     }
+
+//     printf("Enter the prefix to search: ");
+//     scanf("%s", input);
+
+//     search_and_insert(root, input);
+
+//     printf("Strings with the prefix '%s':\n", input);
+//     print_result_strings();
+
 //     return 0;
 // }
