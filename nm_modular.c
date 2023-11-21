@@ -201,7 +201,7 @@ void backup_create_file(int ss_num,int backup_num,char* input)
     // Convert received acknowledgment to an integer
     sscanf(buffer_ack, "%d", &ack);
     close(sock2);
-    close(sock2);
+    // close(sock2);
 }
 
 
@@ -211,5 +211,6 @@ void do_backup_file(int ss_num, char* input)
     backup_file_struct* bb = (backup_file_struct*) malloc(sizeof(backup_file_struct));
     bb->ss_num = ss_num;
     bb->input = input;
-    pthread_create(&create_file_thread,NULL,main_backup_file,(void*)bb);
+    // pthread_create(&create_file_thread,NULL,main_backup_file,(void*)bb);
+    main_backup_file((void*)bb);
 }

@@ -262,7 +262,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             // Send Ack to client that opeartion is successfull
 
             // close(sock2);
-            // do_backup_file(ss_num,input);
+            do_backup_file(ss_num,input);
         }
         return 1;
     }
@@ -375,7 +375,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 // perror("[-]File delete error");
                 // exit(1);
             }
-
+            do_backup_file(ss_num,input);
             close(sock2);
         }
         return 1;
@@ -877,7 +877,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 perror("[-]File creation error");
                 exit(1);
             }
-
+            do_backup_file(ss_num,input);
             close(sock2);
         }
         return 1;
@@ -982,7 +982,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 perror("[-]File delete error");
                 exit(1);
             }
-
+            do_backup_file(ss_num,input);
             close(sock2);
         }
         return 1;
