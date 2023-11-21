@@ -23,6 +23,8 @@
 #include "ss_client_orders.h"
 #include "readwritelock.h"
 #include "ss_copydir.h"
+#include "ss_tries.h"
+#include "ss_backup.h"
 
 #define BUF_SIZE 1024
 

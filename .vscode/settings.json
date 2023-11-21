@@ -6,6 +6,7 @@
         "lru.h": "c",
         "ss_info.h": "c",
         "string.h": "c",
-        "ss_nm_orders.h": "c"
+        "ss_nm_orders.h": "c",
+        "ss_tries.h": "c"
     }
 }

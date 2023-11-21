@@ -1,4 +1,5 @@
 #include "headers.h"
+#include "ss_tries.h"
 
 #define PORT 4545
 char* ip = "127.0.0.1";
@@ -12,6 +13,8 @@ char* copy_file = "copy_file";
 char* create_folder = "create_folder";
 char* delete_folder = "delete_folder";
 char* copy_folder = "copy_folder";
+char* back_folder = "backup_folder";
+char* back_create = "backcreate_folder";
 
 typedef struct filepaths* files;
 typedef struct filepaths
@@ -19,6 +22,8 @@ typedef struct filepaths
     char* name;
     files next;
 }filepaths;
+
+ss_trie* ss_root;
 
 typedef struct threadargs* args;
 typedef struct threadargs
@@ -204,6 +209,31 @@ void* nm_handler_for_ops(void* arg)
             else if(strcmp(comm, "send") == 0)
                 recursivelySend(source, dest, nm_sockfd);
         }
+        else if(strncmp(back_folder, buffer_nm, strlen(back_folder)) == 0)
+        {
+            char* token = strtok(buffer_nm, " ");
+            token = strtok(NULL, " ");
+            char* source = token;
+            remove_nextline(source);
+            token = strtok(NULL, " ");
+            char* dest = token;
+            remove_nextline(dest);
+            token = strtok(NULL, " ");
+            char* comm = token;
+            if(strcmp(comm, "receive") == 0)
+                recvBackup(nm_sockfd);
+            else if(strcmp(comm, "send") == 0)
+                recursivelySend(source, dest, nm_sockfd);
+        }
+        else if(strncmp(back_create, buffer_nm, strlen(back_create)) == 0)
+        {
+            char* token = strtok(buffer_nm, " ");
+            token = strtok(NULL, " ");
+            char* file = token;
+            remove_nextline(file);
+
+            back_make_file(file, nm_sockfd);
+        }
         close(nm_sockfd);
     }
     close(server_sock_1);
@@ -345,6 +375,8 @@ int main(int argc, char *argv[])
     // int nm_port = 4040;
     // int client_port = 7070;
 
+    ss_root = ss_init();
+
     printf("IP: %s\nNM_PORT: %d\nCLIENT_PORT: %d\nEnter file paths(relative to current directory) that the clients can access: (Enter 'DONE' when finished)\n", ip, nm_port, client_port);
 
     files head = (files)malloc(sizeof(filepaths));
@@ -355,6 +387,7 @@ int main(int argc, char *argv[])
         scanf("%s", path);
         if(strcmp(path, "DONE") == 0)
             break;
+        ss_insert(ss_root, path);
         temp->name = (char*)malloc(sizeof(char)*100);
         strcpy(temp->name, path);
         temp->next = (files)malloc(sizeof(filepaths));

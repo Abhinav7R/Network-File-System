@@ -1,5 +1,7 @@
 #include "headers.h"
 
+extern ss_trie* ss_root;
+
 void aurNahiHota(char* dir, char* dest, int nm_sockfd)
 {
     copyDir(dir, dest, nm_sockfd);
@@ -60,6 +62,7 @@ void copyDir(char* dir, char* dest, int nm_sockfd)
         return;
     }
     mkdir(new_dir, 0777);
+    ss_insert(ss_root, new_dir);
 
     struct dirent* entry = readdir(dirp);
     struct stat statbuff;
@@ -72,6 +75,11 @@ void copyDir(char* dir, char* dest, int nm_sockfd)
         }
         char path[1024];
         snprintf(path, sizeof(path), "%s/%s", dir, entry->d_name);
+        if(ss_search(ss_root, path) <= 0)
+        {
+            entry = readdir(dirp);
+            continue;
+        }
         if(stat(path, &statbuff) < 0)
         {
             perror("[-]File stat error");
@@ -101,6 +109,7 @@ void makeFolder(char* buffer_nm, int nm_sockfd)
         perror("[-]Directory create error");
         exit(1);
     }
+    ss_insert(ss_root, token);
     if(send(nm_sockfd, "ack", strlen("ack"), 0) < 0)
     {
         perror("[-]Send error");
@@ -120,6 +129,7 @@ void fileBanao(char* buffer_nm_2, int nm_sockfd)
     char* token = strtok(buffer_nm_2, " ");
     token = strtok(NULL, " ");
     FILE* fd = fopen(token, "w+");
+    ss_insert(ss_root, token);
     // printf("[+]Creating file %s\n", token);
     bzero(buffer_nm, 1024);
     if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
@@ -303,6 +313,11 @@ void sendDirToSS(char* dir, char* dest, int nm_sockfd)
         }
         char path[1024];
         snprintf(path, sizeof(path), "%s/%s", dir, entry->d_name);
+        if(ss_search(ss_root, path) <= 0)
+        {
+            entry = readdir(dirp);
+            continue;
+        }
         if(stat(path, &statbuff) < 0)
         {
             perror("[-]File stat error");

@@ -1,5 +1,7 @@
 #include "ss_nm_orders.h"
 
+extern ss_trie* ss_root;
+
 void make_file(char* file, int nm_sockfd)
 {
     // printf("create file %s\n", file);
@@ -10,6 +12,7 @@ void make_file(char* file, int nm_sockfd)
     FILE* fd = fopen(file, "w+");
     if(fd != NULL)
     {
+        ss_insert(ss_root, file);
         bzero(buffer_nm, 1024);
         strcpy(buffer_nm, "1");
         if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
@@ -57,6 +60,7 @@ void del_file(char* file, int nm_sockfd)
     sprintf(buffer_nm, "%d", ack);
     if(ack == 0)
     {
+        ss_delete_node(ss_root, file);
         if(send(nm_sockfd, "1", strlen("1"), 0) < 0)
         {
             perror("[-]Send error");
@@ -123,10 +127,12 @@ void delete_dir(char* name, int nm_sockfd)
                 perror("[-]File delete error");
                 return;
             }
+            ss_delete_node(ss_root, path);
         }
         entry = readdir(dir);
     }
     rmdir(name);
+    ss_delete_node(ss_root, name);
 }
 
 void make_dir(char* name, int nm_sockfd)
@@ -145,6 +151,7 @@ void make_dir(char* name, int nm_sockfd)
         perror("[-]Directory create error");
         return;
     }
+    ss_insert(ss_root, name);
 }
 
 void copyFile(char* file, char* dir, int nm_sockfd)
@@ -192,6 +199,7 @@ void copyFile(char* file, char* dir, int nm_sockfd)
         perror("[-]File open error");
         return;
     }
+    ss_insert(ss_root, new_file);
     char ch;
     while((ch = fgetc(fd1)) != EOF)
         fputc(ch, fd2);

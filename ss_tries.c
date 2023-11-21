@@ -1,13 +1,10 @@
-#include "tries.h"
-#include "headers.h"
+#include "ss_tries.h"
 
-trie* ss_root;
+//initialise ss_trie
 
-//initialise trie
-
-trie* init()
+ss_trie* ss_init()
 {
-    trie* ss_root = (trie*)malloc(sizeof(trie));
+    ss_trie* ss_root = (ss_trie*)malloc(sizeof(ss_trie));
     ss_root->is_end = 0;
     for (int i = 0; i < 128; i++)
     {
@@ -16,17 +13,17 @@ trie* init()
     return ss_root;
 }
 
-//insert into trie
+//insert into ss_trie
 
-void insert(trie* root, char* str, int server_num)
+void ss_insert(ss_trie* root, char* str)
 {
     // sem_wait(&trie_lock);
-    trie* p = root;
+    ss_trie* p = root;
     for (int i = 0; i < strlen(str); i++)
     {
         if (p->next[str[i]] == NULL)
         {
-            trie* temp = (trie*)malloc(sizeof(trie));
+            ss_trie* temp = (ss_trie*)malloc(sizeof(ss_trie));
             temp->is_end = 0;
             for (int j = 0; j < 128; j++)
             {
@@ -36,20 +33,20 @@ void insert(trie* root, char* str, int server_num)
         }
         p = p->next[str[i]];
     }
-    p->is_end = server_num;
+    p->is_end = 1;
     // init_rwlock(&(p->rwlock));
-    printf("inserted %s\n",str);
+    // printf("inserted %s\n",str);
     // sem_post(&trie_lock);
 }
 
-//search in trie
+//search in ss_trie
 
-int search(trie* root, char* str)
+int ss_search(ss_trie* root, char* str)
 {
     // sem_wait(&trie_lock);
     if(str[strlen(str)-1] == '\n')
         str[strlen(str)-1] = '\0';
-    trie* p = root;
+    ss_trie* p = root;
     for (int i = 0; i < strlen(str); i++)
     {
         
@@ -69,37 +66,12 @@ int search(trie* root, char* str)
     return 0;
 }
 
-rwlock_t* find_rwlock(trie* root, char* str)
+//delete from ss_trie
+
+void ss_delete_node(ss_trie* root, char* str)
 {
     // sem_wait(&trie_lock);
-    if(str[strlen(str)-1] == '\n')
-        str[strlen(str)-1] = '\0';
-    trie* p = root;
-    for (int i = 0; i < strlen(str); i++)
-    {
-        
-        if (p->next[str[i]] == NULL)
-        {
-            // sem_post(&trie_lock);
-            return NULL;
-        }
-        p = p->next[str[i]];
-    }
-    if (p->is_end > 0)
-    {
-        // sem_post(&trie_lock);
-        return &(p->rwlock);
-    }
-    // sem_post(&trie_lock);
-    return NULL;
-}
-
-//delete from trie
-
-void delete_node(trie* root, char* str)
-{
-    // sem_wait(&trie_lock);
-    trie* p = root;
+    ss_trie* p = root;
     for (int i = 0; i < strlen(str); i++)
     {
         if (p->next[str[i]] == NULL)
@@ -112,8 +84,8 @@ void delete_node(trie* root, char* str)
     // sem_post(&trie_lock);
 }
 
-//print all strings in trie in lexicographical order
-void print_trie(trie* root, char* prefix)
+//print all strings in ss_trie in lexicographical order
+void ss_print_trie(ss_trie* root, char* prefix)
 {
     for(int i=0;i<128;i++)
     {
@@ -127,15 +99,15 @@ void print_trie(trie* root, char* prefix)
             {
                 printf("%s\n",temp);
             }
-            print_trie(root->next[i],temp);
+            ss_print_trie(root->next[i],temp);
         }
     }
 }
 
-void print_all_strings_in_trie(trie* root)
+void ss_print_all_strings_in_trie(ss_trie* root)
 {
     // sem_wait(&trie_lock);
-    print_trie(root,"");
+    ss_print_trie(root,"");
     // sem_post(&trie_lock);
 }
 
@@ -143,7 +115,7 @@ void print_all_strings_in_trie(trie* root)
 // {
 //     int n;
 //     scanf("%d",&n);
-//     trie* root = init();
+//     ss_trie* root = init();
 //     for (int i = 0; i < n; i++)
 //     {
 //         char str[100];

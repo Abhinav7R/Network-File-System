@@ -1,5 +1,5 @@
-#ifndef TRIES_H
-#define TRIES_H
+#ifndef __S_TRIES_H
+#define __S_TRIES_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,17 +7,17 @@
 
 //tries in c for all ascii characters
 
-typedef struct node
+typedef struct ss_node
 {
     int is_end;     //also the same as server_num
-    struct node *next[128];
-}trie;
+    struct ss_node *next[128];
+}ss_trie;
 
-trie* init();
-void insert(trie* root, char* str, int server_num);
-int search(trie* root, char* str);
-void print_trie(trie* root, char* prefix);
-void print_all_strings_in_trie(trie* root);
-void delete_node(trie* root, char* str);
+ss_trie* ss_init();
+void ss_insert(ss_trie* root, char* str);
+int ss_search(ss_trie* root, char* str);
+void ss_print_trie(ss_trie* root, char* prefix);
+void ss_print_all_strings_in_trie(ss_trie* root);
+void ss_delete_node(ss_trie* root, char* str);
 
 #endif

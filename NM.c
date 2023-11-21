@@ -282,7 +282,7 @@ void backup_for_3_ss()
     //agrim
     //create a folder called ss1_backup in ss2 and ss3
     char input[1024];
-    sprintf(input,"create_folder ./ss%d/ss%d_backup", 2, 1);
+    sprintf(input,"backcreate_folder ./ss%d/ss%d_backup", 2, 1);
     int sock = connect_to_ss_and_do(2,input);
     char buffer_ack[BUF_SIZE];
     if (recv(sock, buffer_ack, sizeof(buffer_ack), 0) < 0)
@@ -292,19 +292,19 @@ void backup_for_3_ss()
     }
     close(sock);
     bzero(input,1024);
-    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup", 1, 2, 1);
+    sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup", 1, 2, 1);
     copy_backup_folder(1, 2, input);
-    // sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup send", 1, 2, 1);
+    // sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup send", 1, 2, 1);
     // int sock1 = connect_to_ss_and_do(1,input);
     // bzero(input,1024);
-    // sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup receive", 1, 2, 1);
+    // sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup receive", 1, 2, 1);
     // int sock2 = connect_to_ss_and_do(2,input);
     // copy_backup_folder(sock1, sock2);
     // close(sock1);
     // close(sock2);
 
     bzero(input,1024);
-    sprintf(input,"create_folder ./ss%d/ss%d_backup", 3, 1);
+    sprintf(input,"backcreate_folder ./ss%d/ss%d_backup", 3, 1);
     sock = connect_to_ss_and_do(3,input);
     bzero(buffer_ack, BUF_SIZE);
     if (recv(sock, buffer_ack, sizeof(buffer_ack), 0) < 0)
@@ -314,13 +314,13 @@ void backup_for_3_ss()
     }
     close(sock);
     bzero(input,1024);
-    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup", 1, 3, 1);
+    sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup", 1, 3, 1);
     copy_backup_folder(1, 3, input);
     // bzero(input,1024);
-    // sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup send", 1, 3, 1);
+    // sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup send", 1, 3, 1);
     // sock1 = connect_to_ss_and_do(1,input);
     // bzero(input,1024);
-    // sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup receive", 1, 3, 1);
+    // sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup receive", 1, 3, 1);
     // sock2 = connect_to_ss_and_do(3,input);
     // copy_backup_folder(sock1, sock2);
     // close(sock1);
@@ -331,7 +331,7 @@ void backup_for_3_ss()
     ss_ke_backups[2].backup_ss2=3;
     //agrim
     bzero(input,1024);
-    sprintf(input,"create_folder ./ss%d/ss%d_backup", 1, 2);
+    sprintf(input,"backcreate_folder ./ss%d/ss%d_backup", 1, 2);
     sock = connect_to_ss_and_do(1,input);
     bzero(buffer_ack, BUF_SIZE);
     if (recv(sock, buffer_ack, sizeof(buffer_ack), 0) < 0)
@@ -341,20 +341,20 @@ void backup_for_3_ss()
     }
     close(sock);
     bzero(input,1024);
-    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup", 2, 1, 2);
+    sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup", 2, 1, 2);
     copy_backup_folder(2, 1, input);
     // bzero(input,1024);
-    // sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup send", 2, 1, 2);
+    // sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup send", 2, 1, 2);
     // sock1 = connect_to_ss_and_do(2,input);
     // bzero(input,1024);
-    // sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup receive", 2, 1, 2);
+    // sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup receive", 2, 1, 2);
     // sock2 = connect_to_ss_and_do(1,input);
     // copy_backup_folder(sock1, sock2);
     // close(sock1);
     // close(sock2);
 
     bzero(input,1024);
-    sprintf(input,"create_folder ./ss%d/ss%d_backup", 3, 2);
+    sprintf(input,"backcreate_folder ./ss%d/ss%d_backup", 3, 2);
     sock = connect_to_ss_and_do(3,input);
     bzero(buffer_ack, BUF_SIZE);
     if (recv(sock, buffer_ack, sizeof(buffer_ack), 0) < 0)
@@ -364,13 +364,13 @@ void backup_for_3_ss()
     }
     close(sock);
     bzero(input,1024);
-    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup", 2, 3, 2);
+    sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup", 2, 3, 2);
     copy_backup_folder(2, 3, input);
     // bzero(input,1024);
-    // sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup send", 2, 3, 2);
+    // sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup send", 2, 3, 2);
     // sock1 = connect_to_ss_and_do(2,input);
     // bzero(input,1024);
-    // sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup receive", 2, 3, 2);
+    // sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup receive", 2, 3, 2);
     // sock2 = connect_to_ss_and_do(3,input);
     // copy_backup_folder(sock1, sock2);
     // close(sock1);
@@ -380,7 +380,7 @@ void backup_for_3_ss()
     ss_ke_backups[3].backup_ss2=2;
     //agrim
     bzero(input,1024);
-    sprintf(input,"create_folder ./ss%d/ss%d_backup", 1, 3);
+    sprintf(input,"backcreate_folder ./ss%d/ss%d_backup", 1, 3);
     sock = connect_to_ss_and_do(1,input);
     bzero(buffer_ack, BUF_SIZE);
     if (recv(sock, buffer_ack, sizeof(buffer_ack), 0) < 0)
@@ -390,20 +390,20 @@ void backup_for_3_ss()
     }
     close(sock);
     bzero(input,1024);
-    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup", 3, 1, 3);
+    sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup", 3, 1, 3);
     copy_backup_folder(3, 1, input);
     // bzero(input, 1024);
-    // sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup send", 3, 1, 3);
+    // sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup send", 3, 1, 3);
     // sock1 = connect_to_ss_and_do(3,input);
     // bzero(input,1024);
-    // sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup receive", 3, 1, 3);
+    // sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup receive", 3, 1, 3);
     // sock2 = connect_to_ss_and_do(1,input);
     // copy_backup_folder(sock1, sock2);
     // close(sock1);
     // close(sock2);
 
     bzero(input,1024);
-    sprintf(input,"create_folder ./ss%d/ss%d_backup", 2, 3);
+    sprintf(input,"backcreate_folder ./ss%d/ss%d_backup", 2, 3);
     sock = connect_to_ss_and_do(2,input);
     bzero(buffer_ack, BUF_SIZE);
     if (recv(sock, buffer_ack, sizeof(buffer_ack), 0) < 0)
@@ -413,13 +413,13 @@ void backup_for_3_ss()
     }
     close(sock);
     bzero(input,1024);
-    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup", 3, 2, 3);
+    sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup", 3, 2, 3);
     copy_backup_folder(3, 2, input);
     // bzero(input,1024);
-    // sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup send", 3, 2, 3);
+    // sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup send", 3, 2, 3);
     // sock1 = connect_to_ss_and_do(3,input);
     // bzero(input,1024);
-    // sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup receive", 3, 2, 3);
+    // sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup receive", 3, 2, 3);
     // sock2 = connect_to_ss_and_do(2,input);
     // copy_backup_folder(sock1, sock2);
     // close(sock1);
@@ -447,9 +447,8 @@ void* backup_for_more_than_3(int ss_num)
     //agrim
     //create a folder called ss1_backup in ss2 and ss3
     char input[1024];
-    sprintf(input,"create_folder ./ss%d/ss%d_backup", ss_ke_backups[ss_num].backup_ss1, ss_num);
+    sprintf(input,"backcreate_folder ./ss%d/ss%d_backup", ss_ke_backups[ss_num].backup_ss1, ss_num);
     int sock = connect_to_ss_and_do(ss_ke_backups[ss_num].backup_ss1,input);
-    int ack;
     char buffer_ack[BUF_SIZE];
     if (recv(sock, buffer_ack, sizeof(buffer_ack), 0) < 0)
     {
@@ -458,30 +457,37 @@ void* backup_for_more_than_3(int ss_num)
     }
     close(sock);
     bzero(input,1024);
-    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup", ss_ke_backups[ss_num].backup_ss1, ss_num, ss_ke_backups[ss_num].backup_ss1);
+    sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup", ss_num, ss_ke_backups[ss_num].backup_ss1, ss_num);
     copy_backup_folder(ss_num, ss_ke_backups[ss_num].backup_ss1, input);
     // bzero(input,1024);
-    // sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup send", ss_num, ss_ke_backups[ss_num].backup_ss1, ss_num);
+    // sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup send", ss_num, ss_ke_backups[ss_num].backup_ss1, ss_num);
     // int sock1 = connect_to_ss_and_do(ss_num,input);
     // bzero(input,1024);
-    // sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup receive", ss_num, ss_ke_backups[ss_num].backup_ss1, ss_num);
+    // sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup receive", ss_num, ss_ke_backups[ss_num].backup_ss1, ss_num);
     // int sock2 = connect_to_ss_and_do(ss_ke_backups[ss_num].backup_ss1,input);
     // bzero(input,1024);
     // copy_backup_folder(sock1, sock2);
     // close(sock1);
     // close(sock2);
 
-    sprintf(input,"create_folder ./ss%d/ss%d_backup", ss_ke_backups[ss_num].backup_ss2, ss_num);
+    bzero(input,1024);
+    sprintf(input,"backcreate_folder ./ss%d/ss%d_backup", ss_ke_backups[ss_num].backup_ss2, ss_num);
     sock = connect_to_ss_and_do(ss_ke_backups[ss_num].backup_ss2,input);
+    bzero(buffer_ack, BUF_SIZE);
+    if (recv(sock, buffer_ack, sizeof(buffer_ack), 0) < 0)
+    {
+        perror("recv() error");
+        exit(1);
+    }
     close(sock);
     bzero(input,1024);
-    sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup", ss_ke_backups[ss_num].backup_ss2, ss_num, ss_ke_backups[ss_num].backup_ss2);
+    sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup", ss_num, ss_ke_backups[ss_num].backup_ss2, ss_num);
     copy_backup_folder(ss_num, ss_ke_backups[ss_num].backup_ss2, input);
     // bzero(input,1024);
-    // sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup send", ss_num, ss_ke_backups[ss_num].backup_ss2, ss_num);
+    // sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup send", ss_num, ss_ke_backups[ss_num].backup_ss2, ss_num);
     // sock1 = connect_to_ss_and_do(ss_num,input);
     // bzero(input,1024);
-    // sprintf(input, "copy_folder ./ss%d ./ss%d/ss%d_backup receive", ss_num, ss_ke_backups[ss_num].backup_ss2, ss_num);
+    // sprintf(input, "backup_folder ./ss%d ./ss%d/ss%d_backup receive", ss_num, ss_ke_backups[ss_num].backup_ss2, ss_num);
     // sock2 = connect_to_ss_and_do(ss_ke_backups[ss_num].backup_ss2,input);
     // copy_backup_folder(sock1, sock2);
     // close(sock1);
