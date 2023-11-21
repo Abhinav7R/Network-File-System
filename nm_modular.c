@@ -102,6 +102,7 @@ int read_or_retrieve_file(char *input, int nm_sock_for_client)
             //Shift the node to the front of the LRU cache
             shift_node_to_front(filename, head);
         }
+        return 1;
 }
 
 typedef struct backup_file_struct

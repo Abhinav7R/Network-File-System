@@ -35,7 +35,7 @@ void ss_insert(ss_trie* root, char* str)
     }
     p->is_end = 1;
     // init_rwlock(&(p->rwlock));
-    // printf("inserted %s\n",str);
+    printf("inserted in ss trie %s\n",str);
     // sem_post(&trie_lock);
 }
 

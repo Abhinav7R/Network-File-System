@@ -22,6 +22,7 @@ int what_to_do(char *input, int nm_sock_for_client)
     if ((strncmp(input, "read", strlen("read")) == 0) || (strncmp(input, "retrieve", strlen("retrieve")) == 0))
     {
         read_or_retrieve_file(input,nm_sock_for_client);
+        return 1;
     }
     else if (strncmp(input, "write", strlen("write")) == 0)
     {
@@ -117,6 +118,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             release_writelock(rwlock_t);
             printf("write lock released\n");
         }
+        return 1;
     }
 
     else if (strncmp(input, "create_file", strlen("create_file")) == 0)
@@ -258,9 +260,10 @@ int what_to_do(char *input, int nm_sock_for_client)
 
             // Send Ack to client that opeartion is successfull
 
-            close(sock2);
-            do_backup_file(ss_num,input);
+            // close(sock2);
+            // do_backup_file(ss_num,input);
         }
+        return 1;
     }
 
     else if (strncmp(input, "delete_file", strlen("delete_file")) == 0)
@@ -374,6 +377,7 @@ int what_to_do(char *input, int nm_sock_for_client)
 
             close(sock2);
         }
+        return 1;
     }
     else if (strncmp(input, "copy_file", strlen("copy_file")) == 0)
     {
@@ -536,6 +540,7 @@ int what_to_do(char *input, int nm_sock_for_client)
         }
         else
         {
+            printf("reached here!");
             int sock_ss1, sock_ss2;
             struct sockaddr_in serv_addr_ss1, serv_addr_ss2;
             char buffer_ss1[BUF_SIZE], buffer_ss2[BUF_SIZE];
@@ -672,8 +677,10 @@ int what_to_do(char *input, int nm_sock_for_client)
                 exit(1);
             }
 
+            // printf("num_packets: %s\n", num_packets_ss1);
             // Convert NUM_packets to an integer
             sscanf(num_packets_ss1, "%d", &num_packets);
+            // printf("num_packets int: %d\n", num_packets);
 
             // While loop to receive and send data packets
             while (num_packets--)
@@ -686,7 +693,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                     perror("recv() error");
                     exit(1);
                 }
-
+                // printf("data received: %s", data_packet_ss1);
                 // Send data packets to Storage Server 2
                 if (send(sock_ss2, data_packet_ss1, strlen(data_packet_ss1), 0) < 0)
                 {
@@ -721,6 +728,7 @@ int what_to_do(char *input, int nm_sock_for_client)
             // close(sock_ss1);
             // close(sock_ss2);
         }
+        // return 1;
     }
 
     else if (strncmp(input, "create_folder", strlen("create_folder")) == 0)
@@ -849,6 +857,7 @@ int what_to_do(char *input, int nm_sock_for_client)
 
             close(sock2);
         }
+        return 1;
     }
     else if (strncmp(input, "delete_folder", strlen("delete_folder")) == 0)
     {
@@ -953,6 +962,7 @@ int what_to_do(char *input, int nm_sock_for_client)
 
             close(sock2);
         }
+        return 1;
     }
     else if (strncmp(input, "copy_folder", strlen("copy_folder")) == 0)
     {
@@ -994,7 +1004,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                     perror("send() error");
                     exit(1);
                 }
-                return 0;
+                return 1;
             }
 
             else
@@ -1028,7 +1038,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                     perror("send() error");
                     exit(1);
                 }
-                return 0;
+                return 1;
             }
 
             else
@@ -1047,6 +1057,8 @@ int what_to_do(char *input, int nm_sock_for_client)
             port_2 = node_in_cache_2->storage_server_port_for_client;
             strcpy(ss_ip_2, node_in_cache_2->storage_server_ip);
         }
+        printf("%d %d\n", ss_num_1, ss_num_2);
+
         if(ss_num_1 == ss_num_2)
         {
             //Make a connection with the Storage Server
@@ -1170,7 +1182,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                     perror("recv() error");
                     exit(1);
                 }
-                // printf("::::%s\n",bufferFor1);
+                printf("::::%s\n",bufferFor1);
                 if(strcmp(bufferFor1, "__DONE__") == 0)
                 {
                     if(send(sock_ss2, bufferFor1, sizeof(bufferFor1), 0) < 0)
@@ -1193,6 +1205,7 @@ int what_to_do(char *input, int nm_sock_for_client)
 
                     //Insert into trie
                     insert(root, filepath_ss1, ss_num_2);
+                    printf("FIEL %s NUM %d\n", filepath_ss1, ss_num_2);
 
                     //Insert into LRU
                     lru_node* new_lru_node = make_lru_node(filepath_ss1, ss_num_2, ss_client_port_2, ss_ip_2);
@@ -1240,6 +1253,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                 exit(1);
             }
         }
+        // return 1;
     }
     else
     {

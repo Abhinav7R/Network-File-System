@@ -224,12 +224,14 @@ void recvFileFromSS(char* file, char* dest, int nm_sockfd)
         perror("[-]Recv error");
         return;
     }
+    char new_file[1024];
     // printf("SS2 %s\n", buffer_nm);
     if(strncmp(buffer_nm, "create_file", strlen("create_file")) == 0)
     {
         char* token = strtok(buffer_nm, " ");
         token = strtok(NULL, " ");
         make_file(token, nm_sockfd);
+        strcpy(new_file, token);
     }
 
     bzero(buffer_nm, 1024);
@@ -245,20 +247,23 @@ void recvFileFromSS(char* file, char* dest, int nm_sockfd)
         perror("[-]Send error");
         return;
     }
-
-    FILE* fd = fopen(file, "w+");
-    while(num_packets--)
+    printf("%d\n", num_packets);
+    FILE* fd = fopen(new_file, "a");
+    while(num_packets-- > 0)
     {
+        // printf("num_packets: %d\n", num_packets);
         bzero(buffer_nm, 1024);
         if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
         {
             perror("[-]Recv error");
             return;
         }
+        // printf("%s\n", buffer_nm);
         fprintf(fd, "%s", buffer_nm);
     }
-    fprintf(fd, "\n");
     fclose(fd);
+    // printf("exited\n");
+    // fprintf(fd, "\n");
     ack = 1;
     bzero(buffer_nm, 1024);
     sprintf(buffer_nm, "%d", ack);
@@ -275,7 +280,9 @@ void sendFileToSS(char* file, char* dest, int nm_sockfd)
     bzero(buffer_nm, 1024);
 
     char file_name[1024];
-    char* token = strtok(file, "/");
+    char* temp = (char*)malloc(sizeof(char) * (strlen(file) + 1));
+    strcpy(temp, file);
+    char* token = strtok(temp, "/");
     while(token != NULL)
     {
         bzero(file_name, 1024);

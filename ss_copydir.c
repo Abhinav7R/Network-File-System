@@ -18,6 +18,7 @@ void aurNahiHota(char* dir, char* dest, int nm_sockfd)
 
 void copyDir(char* dir, char* dest, int nm_sockfd)
 {
+    printf("dir: %s\tdest: %s\n", dir, dest);
     char buffer_nm[1024];
     bzero(buffer_nm, 1024);
     
@@ -75,11 +76,13 @@ void copyDir(char* dir, char* dest, int nm_sockfd)
         }
         char path[1024];
         snprintf(path, sizeof(path), "%s/%s", dir, entry->d_name);
+        printf("Path: %s\n", path);
         if(ss_search(ss_root, path) <= 0)
         {
             entry = readdir(dirp);
             continue;
         }
+        printf("Found in trie\n");
         if(stat(path, &statbuff) < 0)
         {
             perror("[-]File stat error");

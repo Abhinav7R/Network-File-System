@@ -2,6 +2,7 @@
 
 void read_file(char* file, int client_sockfd)
 {
+    printf("read file %s\n", file);
     char buffer_client[1024];
     FILE* fd = fopen(file, "rb");
     if(fd == NULL)
@@ -15,8 +16,10 @@ void read_file(char* file, int client_sockfd)
     long num_packets = size/1024;
     if(size%1024 != 0)
         num_packets++;
+    // printf("%ld : int \n", num_packets);    
     bzero(buffer_client, 1024);
     sprintf(buffer_client, "%ld", num_packets);
+    // printf("%s\n", buffer_client);
     if(send(client_sockfd, buffer_client, BUF_SIZE, 0) < 0)
     {
         perror("[-]Send error");
