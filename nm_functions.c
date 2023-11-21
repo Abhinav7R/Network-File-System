@@ -1012,8 +1012,8 @@ int what_to_do(char *input, int nm_sock_for_client)
         char *ss_ip_2;
         int port_1, port_2;
 
-        if (node_in_cache_1 == NULL)
-        {
+        // if (node_in_cache_1 == NULL)
+        // {
             // Search in trie
             ss_num_1 = search(root, old_folderpath);
 
@@ -1038,17 +1038,17 @@ int what_to_do(char *input, int nm_sock_for_client)
                 ss_nm_port_1 = array_of_ss_info[ss_num_1].ss_nm_port;
                 ss_ip_1 = array_of_ss_info[ss_num_1].ss_ip;
             }
-        }
-        // Folder found in the LRU cache
-        else
-        {
-            port_1 = node_in_cache_1->storage_server_port_for_client;
-            strcpy(ss_ip_1, node_in_cache_1->storage_server_ip);
-        }
+        // }
+        // // Folder found in the LRU cache
+        // else
+        // {
+        //     port_1 = node_in_cache_1->storage_server_port_for_client;
+        //     strcpy(ss_ip_1, node_in_cache_1->storage_server_ip);
+        // }
 
-        if (node_in_cache_2 == NULL)
-        {
-            // Search in trie
+        // if (node_in_cache_2 == NULL)
+        // {
+        //     // Search in trie
             ss_num_2 = search(root, new_folderpath);
 
             if (ss_num_2 == 0)
@@ -1072,15 +1072,15 @@ int what_to_do(char *input, int nm_sock_for_client)
                 ss_nm_port_2 = array_of_ss_info[ss_num_2].ss_nm_port;
                 ss_ip_2 = array_of_ss_info[ss_num_2].ss_ip;
             }
-        }
-        // Folder found in the LRU cache
-        else
-        {
-            // Retrieve Storage Server information
-            port_2 = node_in_cache_2->storage_server_port_for_client;
-            strcpy(ss_ip_2, node_in_cache_2->storage_server_ip);
-        }
-        printf("%d %d\n", ss_num_1, ss_num_2);
+        // }
+        // // Folder found in the LRU cache
+        // else
+        // {
+        //     // Retrieve Storage Server information
+        //     port_2 = node_in_cache_2->storage_server_port_for_client;
+        //     strcpy(ss_ip_2, node_in_cache_2->storage_server_ip);
+        // }
+        // printf("%d %d\n", ss_num_1, ss_num_2);
 
         if (ss_num_1 == ss_num_2)
         {
@@ -1222,7 +1222,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                     perror("recv() error");
                     exit(1);
                 }
-                printf("::::%s\n", bufferFor1);
+                // printf("::::%s\n", bufferFor1);
                 if (strcmp(bufferFor1, "__DONE__") == 0)
                 {
                     if (send(sock_ss2, bufferFor1, sizeof(bufferFor1), 0) < 0)
@@ -1241,11 +1241,11 @@ int what_to_do(char *input, int nm_sock_for_client)
 
                     char filepath_ss1[BUF_SIZE];
                     strcpy(filepath_ss1, token_ss1);
-                    printf("filepath: %s\n", filepath_ss1);
+                    // printf("filepath: %s\n", filepath_ss1);
 
                     // Insert into trie
                     insert(root, filepath_ss1, ss_num_2);
-                    printf("FIEL %s NUM %d\n", filepath_ss1, ss_num_2);
+                    // printf("FIEL %s NUM %d\n", filepath_ss1, ss_num_2);
 
                     // Insert into LRU
                     lru_node *new_lru_node = make_lru_node(filepath_ss1, ss_num_2, ss_client_port_2, ss_ip_2);
