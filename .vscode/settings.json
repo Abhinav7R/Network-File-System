@@ -5,6 +5,7 @@
         "tries.h": "c",
         "lru.h": "c",
         "ss_info.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "ss_nm_orders.h": "c"
     }
 }

@@ -77,7 +77,7 @@ void backup_for_3_ss()
 
 void* backup_for_more_than_3(int ss_num)
 {
-    for(int i=ss_num;i>0;i--)
+    for(int i=ss_num-1;i>0;i--)
     {
         if(available_ss[i]==AVAILABLE)
         {
@@ -85,7 +85,7 @@ void* backup_for_more_than_3(int ss_num)
             break;
         }
     }
-    for(int i=ss_num;i>0;i--)
+    for(int i=ss_num-1;i>0;i--)
     {
         if(available_ss[i]==AVAILABLE && i!=ss_ke_backups[ss_num].backup_ss1)
         {
