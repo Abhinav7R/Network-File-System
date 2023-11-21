@@ -149,6 +149,7 @@ void make_dir(char* name, int nm_sockfd)
 
 void copyFile(char* file, char* dir, int nm_sockfd)
 {
+    printf("File: %s\tDir: %s\n", file, dir);
     int ack = -1;
     char buffer_nm[1024];
     bzero(buffer_nm, 1024);

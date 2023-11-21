@@ -993,7 +993,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                     perror("send() error");
                     exit(1);
                 }
-                return 1;
+                return 0;
             }
 
             else
@@ -1027,7 +1027,7 @@ int what_to_do(char *input, int nm_sock_for_client)
                     perror("send() error");
                     exit(1);
                 }
-                return 1;
+                return 0;
             }
 
             else
@@ -1092,7 +1092,6 @@ int what_to_do(char *input, int nm_sock_for_client)
             }
 
             //Close the connection to Storage Server
-            close(sock1);
 
             //Send the same acknowledgment to the client
             if(send(nm_sock_for_client, buffer_ack, strlen(buffer_ack), 0) < 0)
@@ -1164,13 +1163,21 @@ int what_to_do(char *input, int nm_sock_for_client)
             char bufferFor1[BUF_SIZE], bufferFor2[BUF_SIZE];
             while(1)
             {
+                bzero(bufferFor1, BUF_SIZE);
                 if(recv(sock_ss1, bufferFor1, sizeof(bufferFor1), 0) < 0)
                 {
                     perror("recv() error");
                     exit(1);
                 }
                 if(strcmp(bufferFor1, "\n") == 0)
+                {
+                    if(send(sock_ss2, bufferFor1, sizeof(bufferFor1), 0) < 0)
+                    {
+                        perror("send() error");
+                        exit(1);
+                    }
                     break;
+                }
                 else if((strncmp(bufferFor1, "create_folder", strlen("create_folder")) == 0) || (strncmp(bufferFor1, "create_file", strlen("create_file")) == 0))
                 {
                     char temp[BUF_SIZE];
@@ -1189,19 +1196,34 @@ int what_to_do(char *input, int nm_sock_for_client)
                     lru_node* new_lru_node = make_lru_node(filepath_ss1, ss_num_2, ss_client_port_2, ss_ip_2);
                     insert_at_front(new_lru_node, head);
                 }
+
                 if(send(sock_ss2, bufferFor1, strlen(bufferFor1), 0) < 0)
+                {
+                    perror("send() error");
+                    exit(1);
+                }
+                // printf("NM %s\n", bufferFor1);
+
+                //acknowledgements
+                if(recv(sock_ss2, bufferFor2, sizeof(bufferFor2), 0) < 0)
+                {
+                    perror("recv() error");
+                    exit(1);
+                }
+                if(send(sock_ss1, bufferFor2, strlen(bufferFor2), 0) < 0)
                 {
                     perror("send() error");
                     exit(1);
                 }
             }
             char ack_ss2_full[BUF_SIZE];
+            bzero(ack_ss2_full, BUF_SIZE);
             if(recv(sock_ss2, ack_ss2_full, sizeof(ack_ss2_full), 0) < 0)
             {
                 perror("recv() error");
                 exit(1);
             }
-
+            // printf("aa gaya\n");
             //Send ack to SS1
             if(send(sock_ss1, ack_ss2_full, strlen(ack_ss2_full), 0) < 0)
             {

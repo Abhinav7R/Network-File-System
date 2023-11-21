@@ -33,8 +33,20 @@ void copyDir(char* dir, char* dest, int nm_sockfd)
         exit(1);
     }
 
+    char dir_name[100];
+    char temp[1024];
+    strcpy(temp, dir);
+    char* token = strtok(temp, "/");
+    while(token != NULL)
+    {
+        bzero(dir_name, 100);
+        strcpy(dir_name, token);
+        token = strtok(NULL, "/");
+    }
+
     char* new_dir = (char*)malloc(sizeof(char) * (strlen(dest) + strlen(dir) + 5));
-    sprintf(new_dir, "%s/%s", dest, dir);
+    bzero(new_dir, sizeof(new_dir));
+    sprintf(new_dir, "%s/%s", dest, dir_name);
     if(strcmp(dir, new_dir) == 0)
     {
         int ack = -1;
@@ -75,8 +87,10 @@ void copyDir(char* dir, char* dest, int nm_sockfd)
 
 void makeFolder(char* buffer_nm, int nm_sockfd)
 {
+    // printf("HH %s\n", buffer_nm);
     char* token = strtok(buffer_nm, " ");
     token = strtok(NULL, " ");
+    // printf("[+]Creating folder %s\n", token);
     if(mkdir(token, 0777) < 0)
     {
         if(send(nm_sockfd, "-1", strlen("-1"), 0) < 0)
@@ -87,50 +101,73 @@ void makeFolder(char* buffer_nm, int nm_sockfd)
         perror("[-]Directory create error");
         exit(1);
     }
+    if(send(nm_sockfd, "ack", strlen("ack"), 0) < 0)
+    {
+        perror("[-]Send error");
+        exit(1);
+    }
+    recvDirFromSS(nm_sockfd);
 }
 
-void fileBanao(char* buffer_nm, int nm_sockfd)
+void fileBanao(char* buffer_nm_2, int nm_sockfd)
 {
-    char* token = strtok(buffer_nm, " ");
-        token = strtok(NULL, " ");
-        FILE* fd = fopen(token, "w+");
+    if(send(nm_sockfd, "ack", strlen("ack"), 0) < 0)
+    {
+        perror("[-]Send error");
+        exit(1);
+    }
+    char buffer_nm[1024];
+    char* token = strtok(buffer_nm_2, " ");
+    token = strtok(NULL, " ");
+    FILE* fd = fopen(token, "w+");
+    // printf("[+]Creating file %s\n", token);
+    bzero(buffer_nm, 1024);
+    if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+    {
+        perror("[-]Recv error");
+        exit(1);
+    }
+    // printf("[+]Receiving %s\n", buffer_nm);
+    while((strncmp(buffer_nm, "create_file", strlen("create_file")) != 0) && strncmp(buffer_nm, "create_folder", strlen("create_folder")) != 0 && (strcmp(buffer_nm, "\n") != 0))
+    {
+        fprintf(fd, "%s", buffer_nm);
         bzero(buffer_nm, 1024);
+        if(send(nm_sockfd, "ack", strlen("ack"), 0) < 0)
+        {
+            perror("[-]Send error");
+            exit(1);
+        }
+        // printf("Hmmm\n");
         if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
         {
             perror("[-]Recv error");
             exit(1);
         }
-        while((strncmp(buffer_nm, "create_file", strlen("create_file")) != 0) && strncmp(buffer_nm, "create_folder", strlen("create_folder")) != 0)
+        // printf("[+]Receiving %s\n", buffer_nm);
+    }
+    fclose(fd);
+    // printf("Finally\n");
+    if(strcmp(buffer_nm, "\n") == 0)
+    {
+        bzero(buffer_nm, 1024);
+        strcpy(buffer_nm, "1");
+        if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
         {
-            fprintf(fd, "%s", buffer_nm);
-            bzero(buffer_nm, 1024);
-            if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
-            {
-                perror("[-]Recv error");
-                exit(1);
-            }
+            perror("[-]Send error");
+            exit(1);
         }
-        fclose(fd);
-        if(strcmp(buffer_nm, "\n") == 0)
-        {
-            bzero(buffer_nm, 1024);
-            strcpy(buffer_nm, "1");
-            if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
-            {
-                perror("[-]Send error");
-                exit(1);
-            }
-            return;
-        }
-        else if(strncmp(buffer_nm, "create_folder", strlen("create_folder")) == 0)
-            makeFolder(buffer_nm, nm_sockfd);
-        else if(strncmp(buffer_nm, "create_file", strlen("create_file")) == 0)
-            fileBanao(buffer_nm, nm_sockfd);
+        return;
+    }
+    else if(strncmp(buffer_nm, "create_folder", strlen("create_folder")) == 0)
+        makeFolder(buffer_nm, nm_sockfd);
+    else if(strncmp(buffer_nm, "create_file", strlen("create_file")) == 0)
+    {
+        fileBanao(buffer_nm, nm_sockfd);
+    }
 }
 
-void recvDirFromSS(char* dir, char* dest, int nm_sockfd)
+void recvDirFromSS(int nm_sockfd)
 {
-    int ack = -1;
     char buffer_nm[1024];
     bzero(buffer_nm, 1024);
     if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
@@ -149,10 +186,14 @@ void recvDirFromSS(char* dir, char* dest, int nm_sockfd)
         }
         return;
     }
+
     else if(strncmp(buffer_nm, "create_file", strlen("create_file")) == 0)
+    {
         fileBanao(buffer_nm, nm_sockfd);
+    }
     else if(strncmp(buffer_nm, "create_folder", strlen("create_folder")) == 0)
         makeFolder(buffer_nm, nm_sockfd);
+    // printf("Ruk ja bas\n");
 }
 
 void filesender(char* file, char* dir, int nm_sockfd)
@@ -177,6 +218,12 @@ void filesender(char* file, char* dir, int nm_sockfd)
         perror("[-]Send error");
         exit;
     }
+    bzero(buffer, 1024);
+    if(recv(nm_sockfd, buffer, sizeof(buffer), 0) < 0)
+    {
+        perror("[-]Recv error");
+        exit;
+    }
 
     FILE* fd = fopen(file, "r");
     bzero(buffer, 1024);
@@ -188,11 +235,18 @@ void filesender(char* file, char* dir, int nm_sockfd)
             exit;
         }
         bzero(buffer, 1024);
+        if(recv(nm_sockfd, buffer, sizeof(buffer), 0) < 0)
+        {
+            perror("[-]Recv error");
+            exit;
+        }
+        bzero(buffer, 1024);
     }
 }
 
 void sendDirToSS(char* dir, char* dest, int nm_sockfd)
 {
+    // printf("HI\n");
     char buffer_nm[1024];
     bzero(buffer_nm, 1024);
 
@@ -202,31 +256,40 @@ void sendDirToSS(char* dir, char* dest, int nm_sockfd)
         if(send(nm_sockfd, "-1", strlen("-1"), 0) < 0)
         {
             perror("[-]Send error");
-            return;
+            exit(1);
         }
         perror("[-]Directory open error");
         exit(1);
     }
+    // printf("BYE\n");
 
-    char dir_name[1024];
+    char dir_name[100];
     char temp[1024];
     strcpy(temp, dir);
     char* token = strtok(temp, "/");
     while(token != NULL)
     {
-        bzero(dir_name, 1024);
+        bzero(dir_name, 100);
         strcpy(dir_name, token);
         token = strtok(NULL, "/");
     }
+    // printf("dir_name: %s\n", dir_name);
 
     char* new_dir = (char*)malloc(sizeof(char) * (strlen(dest) + strlen(dir) + 5));
     bzero(new_dir, sizeof(new_dir));
+    // printf("destdir: %s\n", dest);
     sprintf(new_dir, "%s/%s", dest, dir_name);
     sprintf(buffer_nm, "create_folder %s", new_dir);
     if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
     {
         perror("[-]Send error");
-        return;
+        exit(1);
+    }
+    bzero(buffer_nm, 1024);
+    if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
+    {
+        perror("[-]Recv error");
+        exit(1);
     }
 
     struct dirent* entry = readdir(dirp);
@@ -249,6 +312,7 @@ void sendDirToSS(char* dir, char* dest, int nm_sockfd)
             sendDirToSS(path, new_dir, nm_sockfd);
         else
             filesender(path, new_dir, nm_sockfd);
+        entry = readdir(dirp);
     }
 }
 
@@ -258,15 +322,18 @@ void recursivelySend(char* dir, char* dest, int nm_sockfd)
     char buffer_nm[1024];
     bzero(buffer_nm, 1024);
     strcpy(buffer_nm, "\n");
+    // printf("END1\n");
     if(send(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
     {
         perror("[-]Send error");
         exit(1);
     }
+    // printf("END2\n");
     bzero(buffer_nm, 1024);
     if(recv(nm_sockfd, buffer_nm, sizeof(buffer_nm), 0) < 0)
     {
         perror("[-]Recv error");
         exit(1);
     }
+    // printf("END3\n");
 }
