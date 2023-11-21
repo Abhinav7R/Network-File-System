@@ -247,8 +247,8 @@ int what_to_do(char *input, int nm_sock_for_client)
                 insert(root, file_path, ss_num);
 
                 // Insert into LRU
-                lru_node *new_lru_node = make_lru_node(file_path, ss_num, ss_client_port, ss_ip);
-                insert_at_front(new_lru_node, head);
+                // lru_node *new_lru_node = make_lru_node(file_path, ss_num, ss_client_port, ss_ip);
+                // insert_at_front(new_lru_node, head);
                 printf("Create File done\n");
             }
             else
@@ -558,8 +558,8 @@ int what_to_do(char *input, int nm_sock_for_client)
             // Insert into trie
             insert(root, new_filepath, ss_num_2);
             // Insert into LRU
-            lru_node *new_lru_node = make_lru_node(new_filepath, ss_num_2, ss_client_port_2, ss_ip_2);
-            insert_at_front(new_lru_node, head);
+            // lru_node *new_lru_node = make_lru_node(new_filepath, ss_num_2, ss_client_port_2, ss_ip_2);
+            // insert_at_front(new_lru_node, head);
         }
         else
         {
@@ -645,8 +645,8 @@ int what_to_do(char *input, int nm_sock_for_client)
             insert(root, filepath_ss1, ss_num_2);
 
             // Insert into LRU
-            lru_node *new_lru_node = make_lru_node(filepath_ss1, ss_num_2, ss_client_port_2, ss_ip_2);
-            insert_at_front(new_lru_node, head);
+            // lru_node *new_lru_node = make_lru_node(filepath_ss1, ss_num_2, ss_client_port_2, ss_ip_2);
+            // insert_at_front(new_lru_node, head);
 
             // Send "create_file filepath" command to Storage Server 2
             // printf("NM %s\n", create_file_command_ss1);
@@ -868,8 +868,8 @@ int what_to_do(char *input, int nm_sock_for_client)
                 insert(root, file_path, ss_num);
 
                 // Insert into LRU
-                lru_node *new_lru_node = make_lru_node(file_path, ss_num, ss_client_port, ss_ip);
-                insert_at_front(new_lru_node, head);
+                // lru_node *new_lru_node = make_lru_node(file_path, ss_num, ss_client_port, ss_ip);
+                // insert_at_front(new_lru_node, head);
                 printf("Create Folder done\n");
             }
             else
@@ -1248,8 +1248,8 @@ int what_to_do(char *input, int nm_sock_for_client)
                     // printf("FIEL %s NUM %d\n", filepath_ss1, ss_num_2);
 
                     // Insert into LRU
-                    lru_node *new_lru_node = make_lru_node(filepath_ss1, ss_num_2, ss_client_port_2, ss_ip_2);
-                    insert_at_front(new_lru_node, head);
+                    // lru_node *new_lru_node = make_lru_node(filepath_ss1, ss_num_2, ss_client_port_2, ss_ip_2);
+                    // insert_at_front(new_lru_node, head);
                 }
 
                 if (send(sock_ss2, bufferFor1, strlen(bufferFor1), 0) < 0)
